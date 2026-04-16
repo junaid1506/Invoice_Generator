@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import CreateInvoiceForm from '../components/CreateInvoiceForm.jsx';
+import CompanyDetailsForm from '../components/CompanyDetailsForm.jsx';
 import { fmtExact } from '../utils/format.js';
 
 const sidebarStyle = {
@@ -20,7 +21,7 @@ const sidebarStyle = {
 };
 
 export default function Dashboard() {
-  const { user, appName, isAdmin, logout } = useAuth();
+  const { user, appName, logout } = useAuth();
   const nav = useNavigate();
   const [search, setSearch] = useSearchParams();
   const section = search.get('section') || 'dashboard';
@@ -28,26 +29,22 @@ export default function Dashboard() {
   const [config, setConfig] = useState(null);
   const [stats, setStats] = useState(null);
   const [invoices, setInvoices] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [logs, setLogs] = useState([]);
+  const [company, setCompany] = useState(null);
   const [filterGst, setFilterGst] = useState('all');
   const [banner, setBanner] = useState('');
 
   const load = useCallback(async () => {
-    const [cfg, st, inv] = await Promise.all([
+    const [cfg, st, inv, co] = await Promise.all([
       api('/api/config'),
       api('/api/invoices/stats'),
       api('/api/invoices'),
+      api('/api/company/me'),
     ]);
     setConfig(cfg);
     setStats(st);
     setInvoices(inv.invoices || []);
-    if (isAdmin) {
-      const [u, l] = await Promise.all([api('/api/users'), api('/api/logs')]);
-      setUsers(u.users || []);
-      setLogs(l.logs || []);
-    }
-  }, [isAdmin]);
+    setCompany(co.company);
+  }, []);
 
   useEffect(() => {
     load().catch(() => {});
@@ -83,6 +80,8 @@ export default function Dashboard() {
     return gst === filterGst;
   });
 
+  const companyReady = Boolean(company?.companyName && company?.companyAddress && company?.companyHomeState);
+
   return (
     <div className="d-flex" style={{ minHeight: '100vh' }}>
       <aside style={sidebarStyle} className="d-none d-md-flex">
@@ -91,12 +90,13 @@ export default function Dashboard() {
             <i className="fas fa-file-invoice-dollar me-2" />
             {appName}
           </h5>
-          <small className="opacity-75">{user?.role} panel</small>
+          <small className="opacity-75">Personal panel</small>
         </div>
         <ul className="list-unstyled flex-grow-1 py-2 mb-0 small fw-semibold">
           {[
             ['dashboard', 'fa-tachometer-alt', 'Dashboard'],
             ['create-invoice', 'fa-plus-circle', 'Create Invoice'],
+            ['company-details', 'fa-building', 'Your Company Details'],
           ].map(([key, icon, label]) => (
             <li
               key={key}
@@ -108,26 +108,6 @@ export default function Dashboard() {
               {label}
             </li>
           ))}
-          {isAdmin && (
-            <>
-              <li
-                className={`px-3 py-2 ${section === 'users' ? 'bg-white bg-opacity-20 border-start border-3 border-white' : ''}`}
-                style={{ cursor: 'pointer' }}
-                onClick={() => setSection('users')}
-              >
-                <i className="fas fa-users me-2" style={{ width: 20 }} />
-                Users
-              </li>
-              <li
-                className={`px-3 py-2 ${section === 'logs' ? 'bg-white bg-opacity-20 border-start border-3 border-white' : ''}`}
-                style={{ cursor: 'pointer' }}
-                onClick={() => setSection('logs')}
-              >
-                <i className="fas fa-history me-2" style={{ width: 20 }} />
-                Activity logs
-              </li>
-            </>
-          )}
           <li className="px-3 py-2" style={{ cursor: 'pointer' }} onClick={handleLogout}>
             <i className="fas fa-sign-out-alt me-2" style={{ width: 20 }} />
             Logout
@@ -152,8 +132,7 @@ export default function Dashboard() {
           >
             <option value="dashboard">Dashboard</option>
             <option value="create-invoice">Create</option>
-            {isAdmin && <option value="users">Users</option>}
-            {isAdmin && <option value="logs">Logs</option>}
+            <option value="company-details">Company Details</option>
           </select>
           <button type="button" className="btn btn-light btn-sm" onClick={handleLogout}>
             Logout
@@ -183,6 +162,36 @@ export default function Dashboard() {
 
           {section === 'dashboard' && stats && (
             <>
+              <div className="dashboard-hero mb-4">
+                <div>
+                  <div className="dashboard-kicker">Personal Invoice Workspace</div>
+                  <h2 className="dashboard-title mb-2">Welcome back, {user?.name}</h2>
+                  <p className="dashboard-subtitle mb-0">
+                    Save your company details once, then create invoices faster with your own branding.
+                  </p>
+                </div>
+                <div className="dashboard-hero-actions">
+                  <button
+                    type="button"
+                    className="btn btn-light"
+                    onClick={() => setSection('company-details')}
+                  >
+                    <i className="fas fa-building me-2" />
+                    {companyReady ? 'Update Company Details' : 'Set Company Details'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-light"
+                    onClick={() => setSection(companyReady ? 'create-invoice' : 'company-details')}
+                  >
+                    <i className="fas fa-file-invoice me-2" />
+                    Create Invoice
+                  </button>
+                </div>
+              </div>
+
+              <div className="row g-3 mb-4">
+                <div className="col-lg-8">
               <div
                 className="rounded-4 p-4 text-white mb-4 d-flex justify-content-between align-items-center"
                 style={{
@@ -195,6 +204,34 @@ export default function Dashboard() {
                   <h1 className="fw-bold mb-0">₹{fmtExact(stats.revenue)}</h1>
                 </div>
                 <i className="fas fa-indian-rupee-sign opacity-25" style={{ fontSize: '3rem' }} />
+              </div>
+                </div>
+                <div className="col-lg-4">
+                  <div className="dashboard-side-card h-100">
+                    <div className="d-flex align-items-start justify-content-between mb-3">
+                      <div>
+                        <div className="dashboard-kicker">Company Status</div>
+                        <h5 className="mb-1">{companyReady ? company.companyName : 'Setup required'}</h5>
+                        <p className="text-muted small mb-0">
+                          {companyReady
+                            ? `Home state: ${company.companyHomeState}`
+                            : 'Add company details before creating invoices.'}
+                        </p>
+                      </div>
+                      <span className={`badge ${companyReady ? 'bg-success' : 'bg-warning text-dark'}`}>
+                        {companyReady ? 'Ready' : 'Pending'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => setSection('company-details')}
+                    >
+                      <i className="fas fa-pen me-2" />
+                      {companyReady ? 'Edit Details' : 'Complete Setup'}
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="row g-2 g-lg-3 mb-4">
@@ -229,7 +266,7 @@ export default function Dashboard() {
                 ))}
               </div>
 
-              <div className="card border-0 shadow-sm rounded-3">
+              <div className="card border-0 shadow-sm rounded-4">
                 <div className="card-header bg-white d-flex flex-wrap gap-2 align-items-center justify-content-between">
                   <div className="d-flex flex-wrap align-items-center gap-1">
                     <span className="small text-muted fw-bold me-1">Filter:</span>
@@ -251,7 +288,14 @@ export default function Dashboard() {
                   <button
                     type="button"
                     className="btn btn-primary btn-sm"
-                    onClick={() => setSection('create-invoice')}
+                    onClick={() => {
+                      if (!companyReady) {
+                        setBanner('Please fill your company details first.');
+                        setSection('company-details');
+                        return;
+                      }
+                      setSection('create-invoice');
+                    }}
                   >
                     <i className="fas fa-plus me-1" />
                     New invoice
@@ -263,7 +307,6 @@ export default function Dashboard() {
                       <tr>
                         <th>Invoice #</th>
                         <th>Client</th>
-                        {isAdmin && <th>Created by</th>}
                         <th>Type</th>
                         <th>Amount</th>
                         <th>Status</th>
@@ -282,7 +325,6 @@ export default function Dashboard() {
                           <tr key={inv.id}>
                             <td className="font-monospace fw-bold">{inv.number}</td>
                             <td>{inv.clientName}</td>
-                            {isAdmin && <td>{inv.userName || '—'}</td>}
                             <td>
                               {gst ? (
                                 igst ? (
@@ -339,7 +381,7 @@ export default function Dashboard() {
                                   <i className="fas fa-edit" />
                                 </Link>
                               )}
-                              {isAdmin && (
+                              {!paid && !rejected && (
                                 <button
                                   type="button"
                                   className="btn btn-sm btn-outline-danger"
@@ -363,93 +405,42 @@ export default function Dashboard() {
           )}
 
           {section === 'create-invoice' && config && (
-            <CreateInvoiceForm
-              companyHomeState={config.companyHomeState}
-              indianStates={config.indianStates}
-              fixedHsnSac={config.fixedHsnSac}
-              onSuccess={() => {
-                setBanner('Invoice created successfully.');
-                load();
-                setSection('dashboard');
+            companyReady ? (
+              <CreateInvoiceForm
+                companyHomeState={company.companyHomeState}
+                indianStates={config.indianStates}
+                fixedHsnSac={config.fixedHsnSac}
+                companyGstin={company.companyGstin}
+                onSuccess={() => {
+                  setBanner('Invoice created successfully.');
+                  load();
+                  setSection('dashboard');
+                }}
+              />
+            ) : (
+              <div className="card border-0 shadow-sm rounded-4">
+                <div className="card-body p-4">
+                  <h5 className="fw-bold text-danger mb-2">Please fill your company details</h5>
+                  <p className="mb-3 text-muted">Please fill your company details to create invoices.</p>
+                  <button type="button" className="btn btn-primary btn-sm" onClick={() => setSection('company-details')}>
+                    <i className="fas fa-building me-2" />
+                    Your Company Details
+                  </button>
+                </div>
+              </div>
+            )
+          )}
+
+          {section === 'company-details' && (
+            <CompanyDetailsForm
+              initialCompany={company}
+              indianStates={config?.indianStates}
+              onSaved={async (nextCompany) => {
+                setCompany(nextCompany || null);
+                setBanner('Company details saved.');
               }}
+              onCancel={() => setSection('dashboard')}
             />
-          )}
-
-          {section === 'users' && isAdmin && (
-            <div className="card border-0 shadow-sm">
-              <div className="card-header bg-white fw-bold">Users</div>
-              <div className="table-responsive">
-                <table className="table table-hover mb-0 small">
-                  <thead className="table-light">
-                    <tr>
-                      <th>ID</th>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Role</th>
-                      <th>Joined</th>
-                      <th>Invoices</th>
-                      <th>Revenue</th>
-                      <th />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((u) => (
-                      <tr key={u.id}>
-                        <td>{u.id.slice(-6)}</td>
-                        <td>{u.name}</td>
-                        <td>{u.email}</td>
-                        <td>
-                          <span className={`badge ${u.role === 'admin' ? 'bg-primary' : 'bg-success'}`}>
-                            {u.role}
-                          </span>
-                        </td>
-                        <td>{fmtDate(u.createdAt)}</td>
-                        <td>{u.invoiceCount}</td>
-                        <td>₹{u.totalRevenueFormatted}</td>
-                        <td>
-                          <Link to={`/users/${u.id}`} className="btn btn-sm btn-outline-primary">
-                            History
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {section === 'logs' && isAdmin && (
-            <div className="card border-0 shadow-sm">
-              <div className="card-header bg-white fw-bold">Activity logs</div>
-              <div className="table-responsive">
-                <table className="table table-hover mb-0 small">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Time</th>
-                      <th>User</th>
-                      <th>Action</th>
-                      <th>Target</th>
-                      <th>Details</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {logs.map((log) => (
-                      <tr key={log.id}>
-                        <td>{fmtDate(log.createdAt, true)}</td>
-                        <td>{log.userName}</td>
-                        <td>{log.action}</td>
-                        <td>{log.targetId || '—'}</td>
-                        <td>{log.details || '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {!logs.length && (
-                  <p className="text-center text-muted py-4 mb-0">No logs yet.</p>
-                )}
-              </div>
-            </div>
           )}
         </main>
       </div>

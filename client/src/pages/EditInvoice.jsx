@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
-import { useAuth } from '../context/AuthContext.jsx';
 
 const PREDEFINED = {
   predefined1: [
@@ -55,9 +54,9 @@ function detectTermsOption(terms) {
 
 export default function EditInvoice() {
   const { id } = useParams();
-  const { isAdmin } = useAuth();
   const nav = useNavigate();
   const [config, setConfig] = useState(null);
+  const [companyHomeState, setCompanyHomeState] = useState('Delhi');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [invoiceType, setInvoiceType] = useState('non_gst');
@@ -75,17 +74,17 @@ export default function EditInvoice() {
   const [saving, setSaving] = useState(false);
 
   const isGst = invoiceType === 'gst';
-  const companyHomeState = config?.companyHomeState || 'Delhi';
 
   useEffect(() => {
     Promise.all([api('/api/config'), api(`/api/invoices/${id}`)])
       .then(([cfg, data]) => {
         setConfig(cfg);
         const inv = data.invoice;
-        if (inv.status === 'paid' && !isAdmin) {
+        if (inv.status === 'paid') {
           nav(`/invoice/${id}`);
           return;
         }
+        setCompanyHomeState(inv.companyState || 'Delhi');
         setInvoiceType(inv.isGst === 'yes' ? 'gst' : 'non_gst');
         setClientName(inv.clientName || '');
         setClientEmail(inv.clientEmail || '');
@@ -110,7 +109,7 @@ export default function EditInvoice() {
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [id, nav, isAdmin]);
+  }, [id, nav]);
 
   const totals = useMemo(() => {
     let subtotal = 0;

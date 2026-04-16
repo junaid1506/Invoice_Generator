@@ -12,9 +12,11 @@ export default function CreateInvoiceForm({
   companyHomeState,
   indianStates,
   fixedHsnSac,
+  companyGstin,
   onSuccess,
 }) {
   const [invoiceType, setInvoiceType] = useState('non_gst');
+  const [invoiceNumber, setInvoiceNumber] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [clientPhone, setClientPhone] = useState('');
@@ -78,9 +80,15 @@ export default function CreateInvoiceForm({
     setError('');
     setSaving(true);
     try {
+      if (!invoiceNumber.trim()) {
+        setError('Invoice number is required.');
+        return;
+      }
+
       await api('/api/invoices', {
         method: 'POST',
         body: JSON.stringify({
+          invoiceNumber,
           clientName,
           clientEmail,
           clientPhone,
@@ -105,6 +113,7 @@ export default function CreateInvoiceForm({
       setClientPhone('');
       setClientAddress('');
       setDueDate('');
+      setInvoiceNumber('');
       setGstNumber('');
       setClientState('');
       setTaxRate(isGst ? '18' : '0');
@@ -122,15 +131,37 @@ export default function CreateInvoiceForm({
   const minDue = new Date().toISOString().slice(0, 10);
 
   return (
-    <div className="card border-0 shadow-sm rounded-3">
-      <div className="card-header bg-white border-bottom fw-bold">
+    <div className="card border-0 shadow-sm rounded-4">
+      <div className="card-header bg-white border-bottom fw-bold py-3">
         <i className="fas fa-file-invoice-dollar me-2 text-primary" />
         Create New Invoice
       </div>
       <div className="card-body">
+        <div className="row g-3 mb-4">
+          <div className="col-md-4">
+            <div className="border rounded-4 p-3 h-100 bg-light">
+              <div className="small text-uppercase text-primary fw-bold mb-2">Step 1</div>
+              <div className="fw-bold">Invoice Basics</div>
+              <div className="small text-muted">Add invoice number, client info, and due date.</div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="border rounded-4 p-3 h-100 bg-light">
+              <div className="small text-uppercase text-primary fw-bold mb-2">Step 2</div>
+              <div className="fw-bold">Tax & Terms</div>
+              <div className="small text-muted">Choose GST or non-GST and set terms clearly.</div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="border rounded-4 p-3 h-100 bg-light">
+              <div className="small text-uppercase text-primary fw-bold mb-2">Step 3</div>
+              <div className="fw-bold">Items & Total</div>
+              <div className="small text-muted">Add line items and review the final total before saving.</div>
+            </div>
+          </div>
+        </div>
         {error && <div className="alert alert-danger py-2">{error}</div>}
         <form onSubmit={onSubmit}>
-          <input type="hidden" name="invoice_type" value={invoiceType} />
           <div className="d-flex bg-light rounded p-1 mb-4 border" style={{ gap: 6 }}>
             <button
               type="button"
@@ -158,12 +189,24 @@ export default function CreateInvoiceForm({
 
           {isGst && (
             <div className="alert alert-info py-2 small mb-3">
-              GST numbers: <strong>JSC/00601…</strong> · Company GSTIN: <strong>07ITQPS9749H1ZG</strong>
+              Your company GSTIN: <strong>{companyGstin || 'Not set'}</strong>
             </div>
           )}
 
           <div className="row g-3">
             <div className="col-md-6">
+              <div className="border rounded-4 p-3 h-100">
+              <div className="small text-uppercase text-muted fw-bold mb-2">Client & Invoice Details</div>
+              <label className="form-label fw-semibold small">
+                Invoice Number <span className="text-danger">*</span>
+              </label>
+              <input
+                className="form-control font-monospace"
+                value={invoiceNumber}
+                onChange={(e) => setInvoiceNumber(e.target.value)}
+                placeholder="e.g. INV-001 or JSC/00001"
+                required
+              />
               <label className="form-label fw-semibold small">
                 Client / Company <span className="text-danger">*</span>
               </label>
@@ -233,8 +276,11 @@ export default function CreateInvoiceForm({
                   )}
                 </div>
               )}
+              </div>
             </div>
             <div className="col-md-6">
+              <div className="border rounded-4 p-3 h-100">
+              <div className="small text-uppercase text-muted fw-bold mb-2">Tax, Due Date & Terms</div>
               <label className="form-label fw-semibold small">
                 Due date <span className="text-danger">*</span>
               </label>
@@ -305,6 +351,7 @@ export default function CreateInvoiceForm({
                     onChange={(e) => setCustomTerms(e.target.value)}
                   />
                 )}
+              </div>
               </div>
             </div>
           </div>

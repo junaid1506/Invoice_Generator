@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../context/AuthContext.jsx';
-import * as C from '../constants.js';
+import { LOGO_URL } from '../constants.js';
 import { amountInWords, fmtExact, formatDate } from '../utils/format.js';
 import './ViewInvoice.css';
 
 export default function ViewInvoice() {
   const { id } = useParams();
-  const { isAdmin } = useAuth();
+  useAuth(); // personal-use mode: no admin UI
   const [inv, setInv] = useState(null);
   const [err, setErr] = useState('');
 
@@ -53,9 +53,13 @@ export default function ViewInvoice() {
           Invoice #{inv.number}
         </span>
         <span className={`status-pill status-${inv.status}`}>{inv.status}</span>
-        <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => window.print()}>
+        <button
+          type="button"
+          className="btn btn-outline-secondary btn-sm"
+          onClick={() => window.print()}
+        >
           <i className="fas fa-print me-1" />
-          Print / Save PDF
+          Download PDF
         </button>
         {canEdit && (
           <Link to={`/invoice/${id}/edit`} className="btn btn-warning btn-sm">
@@ -77,14 +81,21 @@ export default function ViewInvoice() {
 
             <div className="inv-header">
               <div className="logo-block">
-                <img src={C.LOGO_URL} alt="Logo" onError={(e) => (e.target.style.display = 'none')} />
-                <div className="co-name">{C.COMPANY_NAME}</div>
+                <img
+                  src={inv.companyLogo || LOGO_URL}
+                  alt="Logo"
+                  onError={(e) => {
+                    if (e.target.src !== LOGO_URL) e.target.src = LOGO_URL;
+                    else e.target.style.display = 'none';
+                  }}
+                />
+                <div className="co-name">{inv.companyName}</div>
                 <div className="co-meta">
-                  {C.COMPANY_ADDRESS}
+                  {inv.companyAddress}
                   <br />
-                  Ph: {C.COMPANY_PHONE} | {C.COMPANY_EMAIL}
+                  Ph: {inv.companyPhone} | {inv.companyEmail}
                 </div>
-                {gst && <div className="gstin-chip">GSTIN: {C.GST_GSTIN}</div>}
+                {gst && <div className="gstin-chip">GSTIN: {inv.companyGstin || '—'}</div>}
               </div>
               <div className="inv-title-col text-end">
                 <h2>{gst ? 'Tax Invoice' : 'Invoice'}</h2>
@@ -111,11 +122,6 @@ export default function ViewInvoice() {
                 <div className="inv-meta-row">
                   Due: <strong>{formatDate(inv.dueDate)}</strong>
                 </div>
-                {isAdmin && inv.userName && (
-                  <div className="inv-meta-row small text-muted">
-                    By: <strong>{inv.userName}</strong>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -123,17 +129,17 @@ export default function ViewInvoice() {
               <div className="info-box">
                 <div className="ib-label">From</div>
                 <div className="ib-body">
-                  <strong>{C.COMPANY_NAME}</strong>
+                  <strong>{inv.companyName}</strong>
                   <br />
-                  {C.COMPANY_ADDRESS}
+                  {inv.companyAddress}
                   <br />
-                  Ph: {C.COMPANY_PHONE}
+                  Ph: {inv.companyPhone}
                   <br />
-                  {C.COMPANY_EMAIL}
+                  {inv.companyEmail}
                   {gst && (
                     <>
                       <br />
-                      <span className="gstin-mono">GSTIN: {C.GST_GSTIN}</span>
+                      <span className="gstin-mono">GSTIN: {inv.companyGstin || '—'}</span>
                     </>
                   )}
                 </div>
@@ -338,46 +344,46 @@ export default function ViewInvoice() {
                     <>
                       <div className="prow">
                         <span className="pl">Bank</span>
-                        <span className="pv">{C.GST_BANK_NAME}</span>
+                        <span className="pv">{inv.gstBankName}</span>
                       </div>
                       <div className="prow">
                         <span className="pl">Account</span>
-                        <span className="pv">{C.GST_ACCOUNT_NAME}</span>
+                        <span className="pv">{inv.gstAccountName}</span>
                       </div>
                       <div className="prow">
                         <span className="pl">A/C No.</span>
-                        <span className="pv">{C.GST_ACCOUNT_NO}</span>
+                        <span className="pv">{inv.gstAccountNo}</span>
                       </div>
                       <div className="prow">
                         <span className="pl">IFSC</span>
-                        <span className="pv">{C.GST_IFSC}</span>
+                        <span className="pv">{inv.gstIfsc}</span>
                       </div>
                       <div className="prow">
                         <span className="pl">GSTIN</span>
-                        <span className="pv">{C.GST_GSTIN}</span>
+                        <span className="pv">{inv.companyGstin || '—'}</span>
                       </div>
                     </>
                   ) : (
                     <>
                       <div className="prow">
                         <span className="pl">Bank</span>
-                        <span className="pv">{C.NONGST_BANK_NAME}</span>
+                        <span className="pv">{inv.nongstBankName}</span>
                       </div>
                       <div className="prow">
                         <span className="pl">Account</span>
-                        <span className="pv">{C.NONGST_ACCOUNT_NAME}</span>
+                        <span className="pv">{inv.nongstAccountName}</span>
                       </div>
                       <div className="prow">
                         <span className="pl">A/C No.</span>
-                        <span className="pv">{C.NONGST_ACCOUNT_NO}</span>
+                        <span className="pv">{inv.nongstAccountNo}</span>
                       </div>
                       <div className="prow">
                         <span className="pl">IFSC</span>
-                        <span className="pv">{C.NONGST_IFSC}</span>
+                        <span className="pv">{inv.nongstIfsc}</span>
                       </div>
                       <div className="prow">
                         <span className="pl">UPI</span>
-                        <span className="pv">{C.NONGST_UPI}</span>
+                        <span className="pv">{inv.nongstUpi}</span>
                       </div>
                     </>
                   )}
@@ -385,7 +391,7 @@ export default function ViewInvoice() {
               </div>
               <div className="sig-col">
                 <p>For</p>
-                <strong>{C.COMPANY_NAME}</strong>
+                <strong>{inv.companyName}</strong>
                 <p className="small text-muted mt-1">Authorised signatory</p>
               </div>
             </div>

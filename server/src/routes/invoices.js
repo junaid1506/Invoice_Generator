@@ -1,14 +1,13 @@
 import { Router } from "express";
 import mongoose from "mongoose";
 import Invoice from "../models/Invoice.js";
-import User from "../models/User.js";
-import { authRequired, adminOnly } from "../middleware/auth.js";
+import Company from "../models/Company.js";
+import { authRequired } from "../middleware/auth.js";
 import { logAction } from "../utils/logAction.js";
-import { COMPANY_HOME_STATE, FIXED_HSN_SAC } from "../config.js";
+import { FIXED_HSN_SAC } from "../config.js";
 import {
   buildLineItems,
   computeTax,
-  nextInvoiceNumber,
   resolveTerms,
 } from "../utils/invoiceHelpers.js";
 
@@ -31,35 +30,59 @@ async function markOverdueForQuery(filter) {
   );
 }
 
-function serializeInvoice(doc, userName = null) {
+function serializeInvoice(doc) {
   if (!doc) return null;
   const o = doc.toObject ? doc.toObject() : { ...doc };
   const id = o._id?.toString?.() ?? o._id;
   return {
     id,
     userId: o.userId?.toString?.() ?? o.userId,
-    userName: userName ?? undefined,
     number: o.number,
+
     clientName: o.clientName,
     clientEmail: o.clientEmail,
     clientPhone: o.clientPhone,
     clientAddress: o.clientAddress,
     dueDate: o.dueDate,
     items: o.items || [],
+
     subtotal: o.subtotal,
     taxRate: o.taxRate,
     taxAmount: o.taxAmount,
     total: o.total,
     status: o.status,
     terms: o.terms || [],
+
     isGst: o.isGst,
     gstNumber: o.gstNumber,
     clientState: o.clientState,
+
     companyState: o.companyState,
+    companyName: o.companyName,
+    companyAddress: o.companyAddress,
+    companyPhone: o.companyPhone,
+    companyEmail: o.companyEmail,
+    companyWebsite: o.companyWebsite,
+    companyLogo: o.companyLogo,
+    companyGstin: o.companyGstin,
+
+    gstBankName: o.gstBankName,
+    gstAccountName: o.gstAccountName,
+    gstAccountNo: o.gstAccountNo,
+    gstIfsc: o.gstIfsc,
+    gstBranch: o.gstBranch,
+
+    nongstBankName: o.nongstBankName,
+    nongstAccountName: o.nongstAccountName,
+    nongstAccountNo: o.nongstAccountNo,
+    nongstIfsc: o.nongstIfsc,
+    nongstUpi: o.nongstUpi,
+
     cgst: o.cgst,
     sgst: o.sgst,
     igst: o.igst,
     hsnSac: o.hsnSac,
+
     createdAt: o.createdAt,
     updatedAt: o.updatedAt,
   };
@@ -101,10 +124,7 @@ async function statsForFilter(filter) {
 
 router.get("/stats", async (req, res) => {
   try {
-    const isAdmin = req.userRole === "admin";
-    const filter = isAdmin
-      ? {}
-      : { userId: new mongoose.Types.ObjectId(req.userId) };
+    const filter = { userId: new mongoose.Types.ObjectId(req.userId) };
     await markOverdueForQuery(filter);
     const stats = await statsForFilter(filter);
     res.json(stats);
@@ -115,28 +135,11 @@ router.get("/stats", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const isAdmin = req.userRole === "admin";
-    const filter = isAdmin ? {} : { userId: req.userId };
+    const filter = { userId: new mongoose.Types.ObjectId(req.userId) };
     await markOverdueForQuery(filter);
 
-    let list;
-    if (isAdmin) {
-      list = await Invoice.find(filter)
-        .sort({ createdAt: -1 })
-        .populate("userId", "name")
-        .lean();
-    } else {
-      list = await Invoice.find(filter).sort({ createdAt: -1 }).lean();
-    }
-
-    const invoices = list.map((row) => {
-      const userName =
-        isAdmin && row.userId?.name ? row.userId.name : undefined;
-      const userIdStr = row.userId?._id
-        ? row.userId._id.toString()
-        : String(row.userId);
-      return serializeInvoice({ ...row, userId: userIdStr }, userName);
-    });
+    const list = await Invoice.find(filter).sort({ createdAt: -1 }).lean();
+    const invoices = list.map((row) => serializeInvoice(row));
 
     res.json({ invoices });
   } catch (e) {
@@ -146,22 +149,15 @@ router.get("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   try {
-    const inv = await Invoice.findById(req.params.id)
-      .populate("userId", "name")
-      .lean();
+    const inv = await Invoice.findById(req.params.id).lean();
     if (!inv) return res.status(404).json({ message: "Invoice not found" });
-    const ownerId = inv.userId?._id?.toString?.() || inv.userId?.toString?.();
-    if (req.userRole !== "admin" && ownerId !== req.userId) {
+
+    const ownerId = inv.userId?.toString?.() || String(inv.userId);
+    if (ownerId !== req.userId) {
       return res.status(403).json({ message: "Forbidden" });
     }
-    const userName = inv.userId?.name;
-    const plain = { ...inv, userId: ownerId };
-    res.json({
-      invoice: serializeInvoice(
-        plain,
-        req.userRole === "admin" ? userName : null,
-      ),
-    });
+
+    res.json({ invoice: serializeInvoice(inv) });
   } catch (e) {
     res.status(500).json({ message: e.message });
   }
@@ -172,10 +168,29 @@ router.post("/", async (req, res) => {
     const body = req.body;
     const clientName = (body.clientName || "").trim();
     const dueDate = body.dueDate;
+    const invoiceNumber = String(body.invoiceNumber || "").trim();
     if (!clientName || !dueDate) {
       return res
         .status(400)
         .json({ message: "Client name and due date are required" });
+    }
+    if (!invoiceNumber) {
+      return res.status(400).json({ message: "Invoice number is required" });
+    }
+
+    const exists = await Invoice.findOne({
+      userId: req.userId,
+      number: invoiceNumber,
+    }).lean();
+    if (exists) {
+      return res.status(409).json({ message: "Invoice number already exists" });
+    }
+
+    const company = await Company.findOne({ userId: req.userId }).lean();
+    if (!company || !company.companyName || !company.companyHomeState) {
+      return res
+        .status(400)
+        .json({ message: "Please fill your company details" });
     }
 
     const isGst = body.invoiceType === "gst";
@@ -202,17 +217,17 @@ router.post("/", async (req, res) => {
 
       taxRate,
       clientState,
+      companyHomeState: company.companyHomeState,
     });
 
     const terms = resolveTerms(
       body.termsOption || "predefined1",
       body.customTerms,
     );
-    const number = await nextInvoiceNumber(Invoice, isGst);
 
     const doc = await Invoice.create({
       userId: req.userId,
-      number,
+      number: invoiceNumber,
       clientName,
       clientEmail: (body.clientEmail || "").trim(),
       clientPhone: (body.clientPhone || "").trim(),
@@ -228,7 +243,28 @@ router.post("/", async (req, res) => {
       isGst: isGst ? "yes" : "no",
       gstNumber,
       clientState,
-      companyState: COMPANY_HOME_STATE,
+      companyState: company.companyHomeState,
+
+      companyName: company.companyName,
+      companyAddress: company.companyAddress,
+      companyPhone: company.companyPhone,
+      companyEmail: company.companyEmail,
+      companyWebsite: company.companyWebsite,
+      companyLogo: company.companyLogo,
+      companyGstin: company.companyGstin,
+
+      gstBankName: company.gstBankName,
+      gstAccountName: company.gstAccountName,
+      gstAccountNo: company.gstAccountNo,
+      gstIfsc: company.gstIfsc,
+      gstBranch: company.gstBranch,
+
+      nongstBankName: company.nongstBankName,
+      nongstAccountName: company.nongstAccountName,
+      nongstAccountNo: company.nongstAccountNo,
+      nongstIfsc: company.nongstIfsc,
+      nongstUpi: company.nongstUpi,
+
       cgst,
       sgst,
       igst,
@@ -239,7 +275,7 @@ router.post("/", async (req, res) => {
       req.userId,
       "create_invoice",
       doc._id,
-      `Created invoice #${number}`,
+      `Created invoice #${invoiceNumber}`,
     );
     res.status(201).json({ invoice: serializeInvoice(doc) });
   } catch (e) {
@@ -251,10 +287,10 @@ router.put("/:id", async (req, res) => {
   try {
     const inv = await Invoice.findById(req.params.id);
     if (!inv) return res.status(404).json({ message: "Invoice not found" });
-    if (req.userRole !== "admin" && inv.userId.toString() !== req.userId) {
+    if (inv.userId.toString() !== req.userId) {
       return res.status(403).json({ message: "Forbidden" });
     }
-    if (inv.status === "paid" && req.userRole !== "admin") {
+    if (inv.status === "paid") {
       return res.status(403).json({ message: "Cannot edit paid invoice" });
     }
 
@@ -290,6 +326,7 @@ router.put("/:id", async (req, res) => {
       subtotal,
       taxRate,
       clientState,
+      companyHomeState: inv.companyState,
     });
 
     const terms = resolveTerms(
@@ -313,7 +350,6 @@ router.put("/:id", async (req, res) => {
     inv.isGst = isGst ? "yes" : "no";
     inv.gstNumber = gstNumber;
     inv.clientState = clientState;
-    inv.companyState = COMPANY_HOME_STATE;
     inv.cgst = cgst;
     inv.sgst = sgst;
     inv.igst = igst;
@@ -348,7 +384,7 @@ router.patch("/:id/status", async (req, res) => {
     }
     const inv = await Invoice.findById(req.params.id);
     if (!inv) return res.status(404).json({ message: "Invoice not found" });
-    if (req.userRole !== "admin" && inv.userId.toString() !== req.userId) {
+    if (inv.userId.toString() !== req.userId) {
       return res.status(403).json({ message: "Forbidden" });
     }
     inv.status = status;
@@ -365,10 +401,13 @@ router.patch("/:id/status", async (req, res) => {
   }
 });
 
-router.delete("/:id", adminOnly, async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const inv = await Invoice.findById(req.params.id);
     if (!inv) return res.status(404).json({ message: "Invoice not found" });
+    if (inv.userId.toString() !== req.userId) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
     const num = inv.number;
     await inv.deleteOne();
     await logAction(

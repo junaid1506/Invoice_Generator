@@ -68,7 +68,6 @@ export function AuthProvider({ children }) {
       user,
       appName,
       loading,
-      isAdmin: user?.role === 'admin',
       login,
       register,
       logout,

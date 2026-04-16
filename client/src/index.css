@@ -4,12 +4,72 @@
 body {
   margin: 0;
   font-family: 'Nunito', 'Segoe UI', sans-serif;
-  background: #f0f2f8;
-  color: #495057;
+  background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%);
+  color: #334155;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.dashboard-hero {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: #fff;
+  border-radius: 28px;
+  padding: 28px;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  box-shadow: 0 22px 45px rgba(79, 70, 229, 0.22);
+}
+
+.dashboard-kicker {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 800;
+  opacity: 0.8;
+}
+
+.dashboard-title {
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.dashboard-subtitle {
+  max-width: 620px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.dashboard-hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-side-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
 }
 
 @media (min-width: 768px) {
   .app-main-offset {
     margin-left: 240px;
+  }
+}
+
+@media (max-width: 767px) {
+  .dashboard-hero {
+    padding: 22px;
+    border-radius: 22px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-title {
+    font-size: 1.6rem;
   }
 }

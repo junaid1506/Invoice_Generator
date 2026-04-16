@@ -1,4 +1,4 @@
-import { COMPANY_HOME_STATE, FIXED_HSN_SAC, PREDEFINED_TERMS } from '../config.js';
+import { FIXED_HSN_SAC, PREDEFINED_TERMS } from '../config.js';
 
 export function formatExactAmount(amount) {
   const n = Number(amount);
@@ -72,7 +72,7 @@ export function buildLineItems(rawItems, hsnSac = FIXED_HSN_SAC) {
   return { validItems: valid, subtotal };
 }
 
-export function computeTax({ isGst, subtotal, taxRate, clientState }) {
+export function computeTax({ isGst, subtotal, taxRate, clientState, companyHomeState }) {
   const rate = Math.max(0, Math.min(100, Number(taxRate) || 0));
   let cgst = 0;
   let sgst = 0;
@@ -81,7 +81,8 @@ export function computeTax({ isGst, subtotal, taxRate, clientState }) {
 
   if (isGst && rate > 0) {
     const state = clientState || null;
-    if (state && state === COMPANY_HOME_STATE) {
+    const home = companyHomeState || 'Delhi';
+    if (state && state === home) {
       cgst = (subtotal * (rate / 100)) / 2;
       sgst = cgst;
       taxAmount = cgst + sgst;

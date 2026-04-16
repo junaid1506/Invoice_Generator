@@ -5,13 +5,10 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
-import User from "./models/User.js";
 import authRoutes from "./routes/auth.js";
 import configRoute from "./routes/configRoute.js";
 import invoicesRoutes from "./routes/invoices.js";
-import usersRoutes from "./routes/users.js";
-import logsRoutes from "./routes/logs.js";
+import companyRoutes from "./routes/company.js";
 import { APP_NAME } from "./config.js";
 
 const app = express();
@@ -23,25 +20,7 @@ app.get("/api/health", (_req, res) => res.json({ ok: true, app: APP_NAME }));
 app.use("/api/config", configRoute);
 app.use("/api/auth", authRoutes);
 app.use("/api/invoices", invoicesRoutes);
-app.use("/api/users", usersRoutes);
-app.use("/api/logs", logsRoutes);
-
-async function seedAdmin() {
-  const email = process.env.SEED_ADMIN_EMAIL;
-  const password = process.env.SEED_ADMIN_PASSWORD;
-  const name = process.env.SEED_ADMIN_NAME || "Admin";
-  if (!email || !password) return;
-  const count = await User.countDocuments();
-  if (count > 0) return;
-  const hash = await bcrypt.hash(password, 10);
-  await User.create({
-    name,
-    email: email.toLowerCase().trim(),
-    password: hash,
-    role: "admin",
-  });
-  console.log(`Seeded admin user: ${email}`);
-}
+app.use("/api/company", companyRoutes);
 
 const port = Number(process.env.PORT) || 5000;
 const uri = process.env.MONGODB_URI;
@@ -60,7 +39,6 @@ mongoose
   .connect(uri)
   .then(async () => {
     console.log("MongoDB connected");
-    await seedAdmin();
     app.listen(port, () => console.log(`API http://localhost:${port}`));
   })
   .catch((e) => {
