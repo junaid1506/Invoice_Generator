@@ -7,21 +7,22 @@
   font-size: 14px;
 }
 .view-inv-root .action-bar {
-  background: white;
-  padding: 12px 20px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  padding: 16px 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
   flex-wrap: wrap;
   position: sticky;
   top: 0;
   z-index: 200;
+  border-bottom: 1px solid rgba(99, 102, 241, 0.1);
 }
 .view-inv-root .ab-title {
   font-weight: 800;
-  color: #4e73df;
-  font-size: 0.95rem;
+  color: #6366f1;
+  font-size: 16px;
   margin-right: auto;
 }
 .view-inv-root .status-pill {
@@ -74,8 +75,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 5px;
-  background: linear-gradient(90deg, #4e73df, #36b9cc);
+  height: 4px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
 }
 .view-inv-root .watermark {
   position: absolute;
@@ -98,7 +99,7 @@
   justify-content: space-between;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 2.5px solid #4e73df;
+  border-bottom: 2px solid #e2e8f0;
 }
 .view-inv-root .logo-block img {
   max-height: 60px;
@@ -110,27 +111,27 @@
 .view-inv-root .co-name {
   font-size: 14px;
   font-weight: 900;
-  color: #2c3e7a;
+  color: #1a1a2e;
 }
 .view-inv-root .co-meta {
   font-size: 10px;
-  color: #777;
+  color: #64748b;
   line-height: 1.7;
 }
 .view-inv-root .gstin-chip {
   display: inline-block;
-  background: #4e73df;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: white;
-  padding: 2px 9px;
-  border-radius: 3px;
-  font-size: 8.5px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 9px;
   font-weight: 800;
-  margin-top: 5px;
+  margin-top: 6px;
 }
 .view-inv-root .inv-title-col h2 {
   font-size: 20px;
   font-weight: 900;
-  color: #4e73df;
+  color: #6366f1;
   margin: 0 0 5px;
   text-transform: uppercase;
 }
@@ -141,11 +142,11 @@
 }
 .view-inv-root .non-gst-chip {
   display: inline-block;
-  background: #e74a3b;
+  background: #ef4444;
   color: white;
-  padding: 2px 9px;
-  border-radius: 3px;
-  font-size: 8.5px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 9px;
   font-weight: 800;
 }
 .view-inv-root .gst-badge {
@@ -224,7 +225,7 @@
   margin-bottom: 8px;
 }
 .view-inv-root .items-tbl thead th {
-  background: #4e73df;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: white;
   padding: 8px 9px;
   font-size: 9px;
@@ -238,15 +239,15 @@
   text-align: right;
 }
 .view-inv-root .row-sub td {
-  background: #eef2ff;
+  background: #ede9fe;
   font-weight: 700;
-  border-top: 2px solid #4e73df;
+  border-top: 2px solid #6366f1;
 }
 .view-inv-root .row-tax td {
   background: #fffbf0;
 }
 .view-inv-root .row-tot td {
-  background: #4e73df;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: white;
   font-weight: 900;
   font-size: 12px;
@@ -284,13 +285,13 @@
   overflow: hidden;
 }
 .view-inv-root .tbd-head {
-  background: #e8f0fe;
+  background: #ede9fe;
   font-size: 8.5px;
   text-transform: uppercase;
-  color: #4e73df;
+  color: #6366f1;
   font-weight: 800;
   padding: 6px 11px;
-  border-bottom: 1px solid #c5d5fb;
+  border-bottom: 1px solid #c7d2fe;
 }
 .view-inv-root .tbd-tbl {
   width: 100%;
@@ -331,7 +332,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  border-top: 2px solid #4e73df;
+  border-top: 2px solid #e2e8f0;
   padding-top: 12px;
   margin-top: 6px;
   flex-wrap: wrap;
@@ -340,7 +341,7 @@
 .view-inv-root .pay-col h6 {
   font-size: 9.5px;
   font-weight: 800;
-  color: #4e73df;
+  color: #6366f1;
   text-transform: uppercase;
 }
 .view-inv-root .prow {
@@ -349,7 +350,7 @@
   font-size: 10px;
 }
 .view-inv-root .pl {
-  color: #888;
+  color: #64748b;
   min-width: 85px;
 }
 .view-inv-root .pv {
@@ -362,7 +363,7 @@
 }
 .view-inv-root .sig-col strong {
   font-size: 12px;
-  color: #4e73df;
+  color: #6366f1;
   display: block;
   margin-top: 24px;
 }

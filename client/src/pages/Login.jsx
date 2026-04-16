@@ -15,7 +15,8 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    try {
+    try { 
+    
       await login(email, password);
       nav("/");
     } catch (err) {

@@ -1,22 +1,78 @@
-import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { api } from '../api.js';
-import { useAuth } from '../context/AuthContext.jsx';
-import { LOGO_URL } from '../constants.js';
-import { amountInWords, fmtExact, formatDate } from '../utils/format.js';
-import './ViewInvoice.css';
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
+import { api } from "../api.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import { LOGO_URL } from "../constants.js";
+import { amountInWords, fmtExact, formatDate } from "../utils/format.js";
+import "./ViewInvoice.css";
 
 export default function ViewInvoice() {
   const { id } = useParams();
   useAuth(); // personal-use mode: no admin UI
   const [inv, setInv] = useState(null);
-  const [err, setErr] = useState('');
+  const [err, setErr] = useState("");
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     api(`/api/invoices/${id}`)
       .then((d) => setInv(d.invoice))
       .catch((e) => setErr(e.message));
   }, [id]);
+
+  const downloadPDF = async () => {
+    if (!inv) return;
+    setDownloading(true);
+    try {
+      const element = document.getElementById("invoice-paper-pdf");
+      if (!element) {
+        alert("Invoice element not found");
+        return;
+      }
+
+      // Capture the invoice as canvas
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+      });
+
+      // Create PDF from canvas
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Add images to PDF (handles multi-page)
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Download the PDF
+      pdf.save(`Invoice_${inv.number}.pdf`);
+    } catch (error) {
+      console.error("PDF download error:", error);
+      alert("Failed to download PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (err) {
     return (
@@ -34,16 +90,16 @@ export default function ViewInvoice() {
     );
   }
 
-  const gst = inv.isGst === 'yes';
+  const gst = inv.isGst === "yes";
   const igst = gst && Number(inv.igst) > 0;
   const taxWords = amountInWords(Number(inv.taxAmount));
   const totalWords = amountInWords(Number(inv.total));
-  const hsn = inv.hsnSac || '998313';
+  const hsn = inv.hsnSac || "998313";
   const useGstBank = gst;
   const colCount = gst ? (igst ? 7 : 8) : 5;
   const subLabelSpan = colCount - 1;
 
-  const canEdit = inv.status !== 'paid';
+  const canEdit = inv.status !== "paid";
 
   return (
     <div className="view-inv-root">
@@ -56,10 +112,13 @@ export default function ViewInvoice() {
         <button
           type="button"
           className="btn btn-outline-secondary btn-sm"
-          onClick={() => window.print()}
+          onClick={downloadPDF}
+          disabled={downloading}
         >
-          <i className="fas fa-print me-1" />
-          Download PDF
+          <i
+            className={`fas ${downloading ? "fa-spinner fa-spin" : "fa-download"} me-1`}
+          />
+          {downloading ? "Downloading..." : "Download PDF"}
         </button>
         {canEdit && (
           <Link to={`/invoice/${id}/edit`} className="btn btn-warning btn-sm">
@@ -75,37 +134,61 @@ export default function ViewInvoice() {
 
       <div className="page-wrap">
         <div className="invoice-col">
-          <div className="invoice-paper">
-            {inv.status === 'paid' && <div className="watermark">PAID</div>}
-            {inv.status === 'draft' && <div className="watermark">DRAFT</div>}
+          <div className="invoice-paper" id="invoice-paper-pdf">
+            {inv.status === "paid" && <div className="watermark">PAID</div>}
+            {inv.status === "draft" && <div className="watermark">DRAFT</div>}
 
             <div className="inv-header">
               <div className="logo-block">
-                <img
-                  src={inv.companyLogo || LOGO_URL}
-                  alt="Logo"
-                  onError={(e) => {
-                    if (e.target.src !== LOGO_URL) e.target.src = LOGO_URL;
-                    else e.target.style.display = 'none';
-                  }}
-                />
+                {inv.companyLogo ? (
+                  <img
+                    src={inv.companyLogo}
+                    alt="Company Logo"
+                    style={{
+                      maxHeight: "80px",
+                      maxWidth: "200px",
+                      objectFit: "contain",
+                      marginBottom: "12px",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: "200px",
+                      height: "80px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "#f1f5f9",
+                      borderRadius: "8px",
+                      marginBottom: "12px",
+                      color: "#cbd5e1",
+                    }}
+                  >
+                    <i className="fas fa-image" style={{ fontSize: "32px" }} />
+                  </div>
+                )}
                 <div className="co-name">{inv.companyName}</div>
                 <div className="co-meta">
                   {inv.companyAddress}
                   <br />
                   Ph: {inv.companyPhone} | {inv.companyEmail}
                 </div>
-                {gst && <div className="gstin-chip">GSTIN: {inv.companyGstin || '—'}</div>}
+                {gst && (
+                  <div className="gstin-chip">
+                    GSTIN: {inv.companyGstin || "—"}
+                  </div>
+                )}
               </div>
               <div className="inv-title-col text-end">
-                <h2>{gst ? 'Tax Invoice' : 'Invoice'}</h2>
+                <h2>{gst ? "Tax Invoice" : "Invoice"}</h2>
                 <div className="mb-2">
                   {gst ? (
                     igst ? (
                       <span className="gst-badge gst-igst">GST — IGST</span>
                     ) : (
                       <>
-                        <span className="gst-badge gst-cgst">CGST</span>{' '}
+                        <span className="gst-badge gst-cgst">CGST</span>{" "}
                         <span className="gst-badge gst-sgst ms-1">SGST</span>
                       </>
                     )
@@ -139,7 +222,9 @@ export default function ViewInvoice() {
                   {gst && (
                     <>
                       <br />
-                      <span className="gstin-mono">GSTIN: {inv.companyGstin || '—'}</span>
+                      <span className="gstin-mono">
+                        GSTIN: {inv.companyGstin || "—"}
+                      </span>
                     </>
                   )}
                 </div>
@@ -151,7 +236,7 @@ export default function ViewInvoice() {
                   <br />
                   {inv.clientAddress && (
                     <>
-                      {inv.clientAddress.split('\n').map((line, i) => (
+                      {inv.clientAddress.split("\n").map((line, i) => (
                         <span key={i}>
                           {line}
                           <br />
@@ -173,9 +258,11 @@ export default function ViewInvoice() {
                   )}
                   {gst && (
                     <>
-                      State: <strong>{inv.clientState || 'N/A'}</strong>
+                      State: <strong>{inv.clientState || "N/A"}</strong>
                       <br />
-                      <span className="gstin-mono">GSTIN: {inv.gstNumber || 'N/A'}</span>
+                      <span className="gstin-mono">
+                        GSTIN: {inv.gstNumber || "N/A"}
+                      </span>
                     </>
                   )}
                 </div>
@@ -186,7 +273,7 @@ export default function ViewInvoice() {
               <div className="detail-row">
                 <div className="dr-item">
                   <div className="drl">Place of supply</div>
-                  <strong>{inv.clientState || '—'}</strong>
+                  <strong>{inv.clientState || "—"}</strong>
                 </div>
                 <div className="dr-item">
                   <div className="drl">Reverse charge</div>
@@ -205,7 +292,7 @@ export default function ViewInvoice() {
                   <th className="tl text-center" style={{ width: 28 }}>
                     Sl.
                   </th>
-                  <th className="tl">Particulars{gst ? ' / HSN-SAC' : ''}</th>
+                  <th className="tl">Particulars{gst ? " / HSN-SAC" : ""}</th>
                   {gst && <th className="text-center">HSN/SAC</th>}
                   {gst &&
                     (igst ? (
@@ -226,7 +313,9 @@ export default function ViewInvoice() {
                   <tr key={idx}>
                     <td className="tl text-center">{idx + 1}</td>
                     <td className="tl">{it.description}</td>
-                    {gst && <td className="text-center font-monospace">{hsn}</td>}
+                    {gst && (
+                      <td className="text-center font-monospace">{hsn}</td>
+                    )}
                     {gst &&
                       (igst ? (
                         <td>{inv.taxRate}%</td>
@@ -360,7 +449,7 @@ export default function ViewInvoice() {
                       </div>
                       <div className="prow">
                         <span className="pl">GSTIN</span>
-                        <span className="pv">{inv.companyGstin || '—'}</span>
+                        <span className="pv">{inv.companyGstin || "—"}</span>
                       </div>
                     </>
                   ) : (

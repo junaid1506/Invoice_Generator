@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import { api } from '../api.js';
+import { useEffect, useMemo, useState } from "react";
+import { api } from "../api.js";
 
 function normalizeUpcase(v) {
-  return String(v || '').trim().toUpperCase();
+  return String(v || "")
+    .trim()
+    .toUpperCase();
 }
 
 export default function CompanyDetailsForm({
@@ -13,75 +15,94 @@ export default function CompanyDetailsForm({
 }) {
   const company = initialCompany || {};
 
-  const [companyName, setCompanyName] = useState(company.companyName || '');
-  const [companyAddress, setCompanyAddress] = useState(company.companyAddress || '');
-  const [companyPhone, setCompanyPhone] = useState(company.companyPhone || '');
-  const [companyEmail, setCompanyEmail] = useState(company.companyEmail || '');
-  const [companyWebsite, setCompanyWebsite] = useState(company.companyWebsite || '');
-  const [companyLogo, setCompanyLogo] = useState(company.companyLogo || '');
-  const [companyGstin, setCompanyGstin] = useState(company.companyGstin || '');
-  const [companyHomeState, setCompanyHomeState] = useState(company.companyHomeState || 'Delhi');
+  const [companyName, setCompanyName] = useState(company.companyName || "");
+  const [companyAddress, setCompanyAddress] = useState(
+    company.companyAddress || "",
+  );
+  const [companyPhone, setCompanyPhone] = useState(company.companyPhone || "");
+  const [companyEmail, setCompanyEmail] = useState(company.companyEmail || "");
+  const [companyWebsite, setCompanyWebsite] = useState(
+    company.companyWebsite || "",
+  );
+  const [companyLogo, setCompanyLogo] = useState(company.companyLogo || "");
+  const [companyGstin, setCompanyGstin] = useState(company.companyGstin || "");
+  const [companyHomeState, setCompanyHomeState] = useState(
+    company.companyHomeState || "Delhi",
+  );
 
-  const [gstBankName, setGstBankName] = useState(company.gstBankName || '');
-  const [gstAccountName, setGstAccountName] = useState(company.gstAccountName || '');
-  const [gstAccountNo, setGstAccountNo] = useState(company.gstAccountNo || '');
-  const [gstIfsc, setGstIfsc] = useState(company.gstIfsc || '');
-  const [gstBranch, setGstBranch] = useState(company.gstBranch || '');
+  const [gstBankName, setGstBankName] = useState(company.gstBankName || "");
+  const [gstAccountName, setGstAccountName] = useState(
+    company.gstAccountName || "",
+  );
+  const [gstAccountNo, setGstAccountNo] = useState(company.gstAccountNo || "");
+  const [gstIfsc, setGstIfsc] = useState(company.gstIfsc || "");
+  const [gstBranch, setGstBranch] = useState(company.gstBranch || "");
 
-  const [nongstBankName, setNongstBankName] = useState(company.nongstBankName || '');
-  const [nongstAccountName, setNongstAccountName] = useState(company.nongstAccountName || '');
-  const [nongstAccountNo, setNongstAccountNo] = useState(company.nongstAccountNo || '');
-  const [nongstIfsc, setNongstIfsc] = useState(company.nongstIfsc || '');
-  const [nongstUpi, setNongstUpi] = useState(company.nongstUpi || '');
+  const [nongstBankName, setNongstBankName] = useState(
+    company.nongstBankName || "",
+  );
+  const [nongstAccountName, setNongstAccountName] = useState(
+    company.nongstAccountName || "",
+  );
+  const [nongstAccountNo, setNongstAccountNo] = useState(
+    company.nongstAccountNo || "",
+  );
+  const [nongstIfsc, setNongstIfsc] = useState(company.nongstIfsc || "");
+  const [nongstUpi, setNongstUpi] = useState(company.nongstUpi || "");
 
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const [bankPaymentType, setBankPaymentType] = useState("gst");
 
   useEffect(() => {
     // Keep form in sync if Dashboard refreshes after saving.
-    setCompanyName(company.companyName || '');
-    setCompanyAddress(company.companyAddress || '');
-    setCompanyPhone(company.companyPhone || '');
-    setCompanyEmail(company.companyEmail || '');
-    setCompanyWebsite(company.companyWebsite || '');
-    setCompanyLogo(company.companyLogo || '');
-    setCompanyGstin(company.companyGstin || '');
-    setCompanyHomeState(company.companyHomeState || 'Delhi');
+    setCompanyName(company.companyName || "");
+    setCompanyAddress(company.companyAddress || "");
+    setCompanyPhone(company.companyPhone || "");
+    setCompanyEmail(company.companyEmail || "");
+    setCompanyWebsite(company.companyWebsite || "");
+    setCompanyLogo(company.companyLogo || "");
+    setCompanyGstin(company.companyGstin || "");
+    setCompanyHomeState(company.companyHomeState || "Delhi");
 
-    setGstBankName(company.gstBankName || '');
-    setGstAccountName(company.gstAccountName || '');
-    setGstAccountNo(company.gstAccountNo || '');
-    setGstIfsc(company.gstIfsc || '');
-    setGstBranch(company.gstBranch || '');
+    setGstBankName(company.gstBankName || "");
+    setGstAccountName(company.gstAccountName || "");
+    setGstAccountNo(company.gstAccountNo || "");
+    setGstIfsc(company.gstIfsc || "");
+    setGstBranch(company.gstBranch || "");
 
-    setNongstBankName(company.nongstBankName || '');
-    setNongstAccountName(company.nongstAccountName || '');
-    setNongstAccountNo(company.nongstAccountNo || '');
-    setNongstIfsc(company.nongstIfsc || '');
-    setNongstUpi(company.nongstUpi || '');
+    setNongstBankName(company.nongstBankName || "");
+    setNongstAccountName(company.nongstAccountName || "");
+    setNongstAccountNo(company.nongstAccountNo || "");
+    setNongstIfsc(company.nongstIfsc || "");
+    setNongstUpi(company.nongstUpi || "");
   }, [initialCompany]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const stateOptions = useMemo(() => indianStates || ['Delhi'], [indianStates]);
+  const stateOptions = useMemo(() => indianStates || ["Delhi"], [indianStates]);
 
   function onLogoChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      setError('Please choose an image file for the logo.');
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose an image file for the logo.");
       return;
     }
 
     const reader = new FileReader();
     reader.onload = () => {
-      setCompanyLogo(typeof reader.result === 'string' ? reader.result : '');
+      setCompanyLogo(typeof reader.result === "string" ? reader.result : "");
+      setError("");
+    };
+    reader.onerror = () => {
+      setError("Failed to read file. Please try again.");
     };
     reader.readAsDataURL(file);
   }
 
   async function onSubmit(e) {
     e.preventDefault();
-    setError('');
+    setError("");
     setSaving(true);
     try {
       const payload = {
@@ -105,151 +126,325 @@ export default function CompanyDetailsForm({
         nongstUpi,
       };
 
-      const res = await api('/api/company/me', {
-        method: 'PUT',
+      const res = await api("/api/company/me", {
+        method: "PUT",
         body: JSON.stringify(payload),
       });
       onSaved?.(res.company);
     } catch (err) {
-      setError(err.message || 'Failed to save company details');
+      setError(err.message || "Failed to save company details");
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="card border-0 shadow-sm rounded-3">
-      <div
-        className="card-header border-bottom fw-bold text-white"
-        style={{
-          background: 'linear-gradient(135deg,#6366f1 0%, #8b5cf6 100%)',
-        }}
-      >
-        <i className="fas fa-building me-2" />
-        Your Company Details
-      </div>
-      <div className="card-body">
-        <div className="row g-3 mb-4">
-          <div className="col-md-4">
-            <div className="border rounded-4 p-3 h-100 bg-light">
-              <div className="small text-uppercase text-primary fw-bold mb-2">Step 1</div>
-              <h6 className="fw-bold mb-1">Business Identity</h6>
-              <p className="small text-muted mb-0">Add your company name, logo, GSTIN, and contact details.</p>
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="border rounded-4 p-3 h-100 bg-light">
-              <div className="small text-uppercase text-primary fw-bold mb-2">Step 2</div>
-              <h6 className="fw-bold mb-1">Payment Setup</h6>
-              <p className="small text-muted mb-0">Add bank and UPI details so invoices are ready to share.</p>
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="border rounded-4 p-3 h-100 bg-light">
-              <div className="small text-uppercase text-primary fw-bold mb-2">Step 3</div>
-              <h6 className="fw-bold mb-1">Create Invoices</h6>
-              <p className="small text-muted mb-0">Once saved, every invoice will automatically use your company details.</p>
-            </div>
-          </div>
+    <div className="card-modern">
+      <div className="card-modern-header mb-4">
+        <div>
+          <h3 className="card-modern-title">
+            <i className="fas fa-building me-2" style={{ color: "#6366f1" }} />
+            Your Company Details
+          </h3>
+          <p className="card-modern-subtitle">
+            Setup your company once for all invoices
+          </p>
         </div>
-        {error && <div className="alert alert-danger py-2">{error}</div>}
-        <form onSubmit={onSubmit}>
-          <div className="row g-3">
-            <div className="col-md-6">
-              <div className="border rounded-4 p-3 mb-3 bg-white">
-                <div className="d-flex align-items-center justify-content-between mb-3">
+      </div>
+
+      {/* Quick Setup Guide */}
+      <div className="row g-3 mb-4">
+        {[
+          {
+            step: 1,
+            title: "Business Identity",
+            desc: "Company name, logo, GSTIN, and contact",
+          },
+          {
+            step: 2,
+            title: "Payment Setup",
+            desc: "Bank and UPI details for invoices",
+          },
+          {
+            step: 3,
+            title: "Create Invoices",
+            desc: "Auto-fill details in every invoice",
+          },
+        ].map(({ step, title, desc }) => (
+          <div key={step} className="col-md-4">
+            <div
+              style={{
+                padding: "16px",
+                border: "1px solid rgba(99, 102, 241, 0.2)",
+                borderRadius: "8px",
+                background:
+                  "linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05))",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "12px",
+                  color: "#6366f1",
+                  fontWeight: "700",
+                  marginBottom: "8px",
+                }}
+              >
+                STEP {step}
+              </div>
+              <h6 style={{ fontWeight: "700", marginBottom: "4px" }}>
+                {title}
+              </h6>
+              <p
+                style={{ fontSize: "13px", color: "#64748b", marginBottom: 0 }}
+              >
+                {desc}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {error && (
+        <div className="alert alert-error" style={{ marginBottom: "20px" }}>
+          <i className="fas fa-exclamation-circle me-2" />
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={onSubmit}>
+        <div className="row g-4">
+          {/* LEFT COLUMN - BASIC DETAILS */}
+          <div className="col-lg-6">
+            <h5 className="section-header">
+              <i className="fas fa-id-card me-2" />
+              Business Identity
+            </h5>
+
+            {/* Logo Upload */}
+            <div className="form-group" style={{ marginBottom: "28px" }}>
+              <div className="form-label-wrapper">
+                <label className="form-label">Company Logo</label>
+                <span className="form-label-optional">Optional</span>
+              </div>
+              <div
+                style={{
+                  border: "2px dashed #e2e8f0",
+                  borderRadius: "8px",
+                  padding: "20px",
+                  textAlign: "center",
+                  marginBottom: "12px",
+                  backgroundColor: "#f8fafc",
+                  transition: "all 0.3s ease",
+                  cursor: "pointer",
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) {
+                    const event = { target: { files: [file] } };
+                    onLogoChange(event);
+                  }
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.style.backgroundColor = "#ede9fe";
+                }}
+                onDragLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                }}
+              >
+                {companyLogo ? (
                   <div>
-                    <div className="small text-uppercase text-muted fw-bold">Branding</div>
-                    <h6 className="fw-bold mb-0">Company Logo</h6>
-                  </div>
-                  {companyLogo ? (
                     <img
                       src={companyLogo}
                       alt="Company logo"
-                      style={{ width: 64, height: 64, objectFit: 'contain' }}
+                      style={{
+                        maxHeight: "80px",
+                        maxWidth: "180px",
+                        objectFit: "contain",
+                        marginBottom: "12px",
+                      }}
                     />
-                  ) : (
-                    <div className="rounded-circle bg-light d-flex align-items-center justify-content-center" style={{ width: 64, height: 64 }}>
-                      <i className="fas fa-image text-muted" />
-                    </div>
-                  )}
-                </div>
-                <label className="form-label fw-semibold small">Upload Logo</label>
-                <input type="file" accept="image/*" className="form-control" onChange={onLogoChange} />
-                <div className="small text-muted mt-2">Best result: square PNG or JPG image. This logo will appear on invoices.</div>
-                {companyLogo && (
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-outline-danger mt-3"
-                    onClick={() => setCompanyLogo('')}
-                  >
-                    Remove logo
-                  </button>
+                    <p
+                      style={{
+                        fontSize: "12px",
+                        color: "#64748b",
+                        marginBottom: 0,
+                      }}
+                    >
+                      <i
+                        className="fas fa-check-circle"
+                        style={{ color: "#10b981" }}
+                      />{" "}
+                      Logo uploaded
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <i
+                      className="fas fa-image"
+                      style={{
+                        fontSize: "32px",
+                        color: "#cbd5e1",
+                        marginBottom: "12px",
+                        display: "block",
+                      }}
+                    />
+                    <p style={{ marginBottom: "4px", fontWeight: "600" }}>
+                      Drag logo here or click to upload
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "12px",
+                        color: "#64748b",
+                        marginBottom: 0,
+                      }}
+                    >
+                      PNG or JPG, max 5MB
+                    </p>
+                  </div>
                 )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={onLogoChange}
+                  style={{ display: "none" }}
+                  onClick={(e) => {
+                    const input = e.target;
+                    input.click();
+                  }}
+                  ref={(input) => {
+                    if (input) {
+                      input.parentElement.onclick = () => input.click();
+                    }
+                  }}
+                />
               </div>
-
-              <div className="border rounded-4 p-3 bg-white">
-                <div className="small text-uppercase text-muted fw-bold mb-2">Basic Details</div>
-              <label className="form-label fw-semibold small">
-                Company Name <span className="text-danger">*</span>
-              </label>
-              <input
-                className="form-control"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                required
-              />
-
-              <label className="form-label fw-semibold small mt-2">
-                Address <span className="text-danger">*</span>
-              </label>
-              <textarea
-                className="form-control"
-                rows={3}
-                value={companyAddress}
-                onChange={(e) => setCompanyAddress(e.target.value)}
-                required
-              />
-
-              <label className="form-label fw-semibold small mt-2">Phone</label>
-              <input
-                className="form-control"
-                value={companyPhone}
-                onChange={(e) => setCompanyPhone(e.target.value)}
-              />
-
-              <label className="form-label fw-semibold small mt-2">Email</label>
-              <input
-                type="email"
-                className="form-control"
-                value={companyEmail}
-                onChange={(e) => setCompanyEmail(e.target.value)}
-              />
-
-              <label className="form-label fw-semibold small mt-2">Website</label>
-              <input
-                className="form-control"
-                value={companyWebsite}
-                onChange={(e) => setCompanyWebsite(e.target.value)}
-              />
+              {companyLogo && (
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setCompanyLogo("")}
+                  style={{ fontSize: "13px", padding: "6px 12px" }}
+                >
+                  <i className="fas fa-trash-alt me-1" />
+                  Remove Logo
+                </button>
+              )}
+              <div className="form-hint-text">
+                This logo will appear on all your invoices. Square format works
+                best.
               </div>
             </div>
 
-            <div className="col-md-6">
-              <div className="border rounded-4 p-3 bg-white">
-              <div className="small text-uppercase text-muted fw-bold mb-2">Tax & Payment Details</div>
-              <label className="form-label fw-semibold small">
-                GSTIN <span className="text-danger">*</span>
+            {/* Company Name */}
+            <div className="form-group">
+              <label className="form-label">
+                Company Name <span className="form-label-required">*</span>
               </label>
               <input
-                className="form-control font-monospace text-uppercase"
-                value={companyGstin}
-                onChange={(e) => setCompanyGstin(e.target.value)}
+                type="text"
+                className="form-input"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="e.g., ABC Pvt Ltd"
                 required
               />
+              <div className="form-hint-text">Your official business name</div>
+            </div>
 
-              <label className="form-label fw-semibold small mt-2">
-                Company Home State <span className="text-danger">*</span>
+            {/* Address */}
+            <div className="form-group">
+              <label className="form-label">
+                Address <span className="form-label-required">*</span>
+              </label>
+              <textarea
+                className="form-textarea"
+                value={companyAddress}
+                onChange={(e) => setCompanyAddress(e.target.value)}
+                placeholder="Full office address"
+                required
+              />
+              <div className="form-hint-text">
+                Complete business address for invoices
+              </div>
+            </div>
+
+            {/* Phone */}
+            <div className="form-group">
+              <div className="form-label-wrapper">
+                <label className="form-label">Phone</label>
+                <span className="form-label-optional">Optional</span>
+              </div>
+              <input
+                type="tel"
+                className="form-input"
+                value={companyPhone}
+                onChange={(e) => setCompanyPhone(e.target.value)}
+                placeholder="e.g., +91 9999999999"
+              />
+            </div>
+
+            {/* Email */}
+            <div className="form-group">
+              <div className="form-label-wrapper">
+                <label className="form-label">Email</label>
+                <span className="form-label-optional">Optional</span>
+              </div>
+              <input
+                type="email"
+                className="form-input"
+                value={companyEmail}
+                onChange={(e) => setCompanyEmail(e.target.value)}
+                placeholder="e.g., info@company.com"
+              />
+            </div>
+
+            {/* Website */}
+            <div className="form-group">
+              <div className="form-label-wrapper">
+                <label className="form-label">Website</label>
+                <span className="form-label-optional">Optional</span>
+              </div>
+              <input
+                type="url"
+                className="form-input"
+                value={companyWebsite}
+                onChange={(e) => setCompanyWebsite(e.target.value)}
+                placeholder="e.g., www.company.com"
+              />
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN - TAX & PAYMENT DETAILS */}
+          <div className="col-lg-6">
+            <h5 className="section-header">
+              <i className="fas fa-credit-card me-2" />
+              Tax & Payment Details
+            </h5>
+
+            {/* GSTIN */}
+            <div className="form-group">
+              <label className="form-label">
+                GSTIN <span className="form-label-required">*</span>
+              </label>
+              <input
+                type="text"
+                className="form-input font-monospace"
+                value={companyGstin}
+                onChange={(e) => setCompanyGstin(e.target.value)}
+                placeholder="e.g., 27AABCU9603R1Z0"
+                required
+                style={{ letterSpacing: "1px" }}
+              />
+              <div className="form-hint-text">15-character GSTIN number</div>
+            </div>
+
+            {/* Company Home State */}
+            <div className="form-group">
+              <label className="form-label">
+                Company Home State{" "}
+                <span className="form-label-required">*</span>
               </label>
               <select
                 className="form-select"
@@ -262,59 +457,269 @@ export default function CompanyDetailsForm({
                   </option>
                 ))}
               </select>
-
-              <hr className="my-3" />
-              <div className="small fw-bold text-primary mb-2">GST Payment Details</div>
-
-              <label className="form-label fw-semibold small">Bank Name</label>
-              <input className="form-control" value={gstBankName} onChange={(e) => setGstBankName(e.target.value)} />
-
-              <label className="form-label fw-semibold small mt-2">Account Name</label>
-              <input className="form-control" value={gstAccountName} onChange={(e) => setGstAccountName(e.target.value)} />
-
-              <label className="form-label fw-semibold small mt-2">Account No.</label>
-              <input className="form-control font-monospace" value={gstAccountNo} onChange={(e) => setGstAccountNo(e.target.value)} />
-
-              <label className="form-label fw-semibold small mt-2">IFSC</label>
-              <input className="form-control font-monospace" value={gstIfsc} onChange={(e) => setGstIfsc(e.target.value)} />
-
-              <label className="form-label fw-semibold small mt-2">Branch</label>
-              <input className="form-control" value={gstBranch} onChange={(e) => setGstBranch(e.target.value)} />
-
-              <hr className="my-3" />
-              <div className="small fw-bold text-primary mb-2">Non-GST Payment Details</div>
-
-              <label className="form-label fw-semibold small">Bank Name</label>
-              <input className="form-control" value={nongstBankName} onChange={(e) => setNongstBankName(e.target.value)} />
-
-              <label className="form-label fw-semibold small mt-2">Account Name</label>
-              <input className="form-control" value={nongstAccountName} onChange={(e) => setNongstAccountName(e.target.value)} />
-
-              <label className="form-label fw-semibold small mt-2">Account No.</label>
-              <input className="form-control font-monospace" value={nongstAccountNo} onChange={(e) => setNongstAccountNo(e.target.value)} />
-
-              <label className="form-label fw-semibold small mt-2">IFSC</label>
-              <input className="form-control font-monospace" value={nongstIfsc} onChange={(e) => setNongstIfsc(e.target.value)} />
-
-              <label className="form-label fw-semibold small mt-2">UPI</label>
-              <input className="form-control font-monospace" value={nongstUpi} onChange={(e) => setNongstUpi(e.target.value)} />
+              <div className="form-hint-text">
+                Used for CGST/SGST/IGST calculations
               </div>
             </div>
-          </div>
 
-          <div className="d-flex gap-2 mt-4">
-            <button type="submit" className="btn btn-success" disabled={saving}>
-              {saving ? 'Saving…' : 'Save Company Details'}
-            </button>
-            {onCancel && (
-              <button type="button" className="btn btn-outline-secondary" onClick={onCancel}>
-                Cancel
-              </button>
+            {/* Bank Payment Type Toggle */}
+            <div style={{ marginTop: "32px", marginBottom: "24px" }}>
+              <label className="form-label">Payment Details Type</label>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "12px",
+                  backgroundColor: "#f1f5f9",
+                  padding: "4px",
+                  borderRadius: "8px",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setBankPaymentType("gst")}
+                  style={{
+                    flex: 1,
+                    padding: "10px 16px",
+                    border: "none",
+                    borderRadius: "6px",
+                    fontWeight: "600",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    backgroundColor:
+                      bankPaymentType === "gst" ? "white" : "transparent",
+                    color: bankPaymentType === "gst" ? "#6366f1" : "#64748b",
+                    boxShadow:
+                      bankPaymentType === "gst"
+                        ? "0 2px 8px rgba(99, 102, 241, 0.2)"
+                        : "none",
+                  }}
+                >
+                  <i className="fas fa-receipt me-2" />
+                  GST Invoice
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBankPaymentType("nongst")}
+                  style={{
+                    flex: 1,
+                    padding: "10px 16px",
+                    border: "none",
+                    borderRadius: "6px",
+                    fontWeight: "600",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    backgroundColor:
+                      bankPaymentType === "nongst" ? "white" : "transparent",
+                    color: bankPaymentType === "nongst" ? "#6366f1" : "#64748b",
+                    boxShadow:
+                      bankPaymentType === "nongst"
+                        ? "0 2px 8px rgba(99, 102, 241, 0.2)"
+                        : "none",
+                  }}
+                >
+                  <i className="fas fa-file-alt me-2" />
+                  Non-GST Invoice
+                </button>
+              </div>
+              <div className="form-hint-text">
+                Choose the type to edit payment details for that invoice type
+              </div>
+            </div>
+
+            {/* GST PAYMENT DETAILS */}
+            {bankPaymentType === "gst" && (
+              <div>
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    background:
+                      "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(20, 184, 166, 0.1))",
+                    border: "1px solid rgba(16, 185, 129, 0.2)",
+                    borderRadius: "8px",
+                    marginBottom: "20px",
+                    fontSize: "13px",
+                    color: "#047857",
+                  }}
+                >
+                  <i className="fas fa-info-circle me-2" />
+                  Payment details for GST invoices
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Bank Name</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={gstBankName}
+                    onChange={(e) => setGstBankName(e.target.value)}
+                    placeholder="e.g., HDFC Bank"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Account Name</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={gstAccountName}
+                    onChange={(e) => setGstAccountName(e.target.value)}
+                    placeholder="Account holder name"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Account No.</label>
+                  <input
+                    type="text"
+                    className="form-input font-monospace"
+                    value={gstAccountNo}
+                    onChange={(e) => setGstAccountNo(e.target.value)}
+                    placeholder="Bank account number"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">IFSC Code</label>
+                  <input
+                    type="text"
+                    className="form-input font-monospace"
+                    value={gstIfsc}
+                    onChange={(e) => setGstIfsc(e.target.value)}
+                    placeholder="e.g., HDFC0000001"
+                    style={{ letterSpacing: "1px" }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Branch</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={gstBranch}
+                    onChange={(e) => setGstBranch(e.target.value)}
+                    placeholder="Branch name/location"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* NON-GST PAYMENT DETAILS */}
+            {bankPaymentType === "nongst" && (
+              <div>
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    background:
+                      "linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1))",
+                    border: "1px solid rgba(99, 102, 241, 0.2)",
+                    borderRadius: "8px",
+                    marginBottom: "20px",
+                    fontSize: "13px",
+                    color: "#1e40af",
+                  }}
+                >
+                  <i className="fas fa-info-circle me-2" />
+                  Payment details for Non-GST invoices (Bank & UPI)
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Bank Name</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={nongstBankName}
+                    onChange={(e) => setNongstBankName(e.target.value)}
+                    placeholder="e.g., ICICI Bank"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Account Name</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={nongstAccountName}
+                    onChange={(e) => setNongstAccountName(e.target.value)}
+                    placeholder="Account holder name"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Account No.</label>
+                  <input
+                    type="text"
+                    className="form-input font-monospace"
+                    value={nongstAccountNo}
+                    onChange={(e) => setNongstAccountNo(e.target.value)}
+                    placeholder="Bank account number"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">IFSC Code</label>
+                  <input
+                    type="text"
+                    className="form-input font-monospace"
+                    value={nongstIfsc}
+                    onChange={(e) => setNongstIfsc(e.target.value)}
+                    placeholder="e.g., ICIC0000001"
+                    style={{ letterSpacing: "1px" }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">UPI ID</label>
+                  <input
+                    type="text"
+                    className="form-input font-monospace"
+                    value={nongstUpi}
+                    onChange={(e) => setNongstUpi(e.target.value)}
+                    placeholder="e.g., yourname@upi"
+                  />
+                </div>
+              </div>
             )}
           </div>
-        </form>
-      </div>
+        </div>
+
+        {/* Form Actions */}
+        <div style={{ display: "flex", gap: "12px", marginTop: "32px" }}>
+          <button
+            type="submit"
+            className="btn-gradient"
+            disabled={saving}
+            style={{
+              minWidth: "180px",
+              opacity: saving ? 0.7 : 1,
+              pointerEvents: saving ? "none" : "auto",
+            }}
+          >
+            {saving ? (
+              <>
+                <i className="fas fa-spinner fa-spin me-2" />
+                Saving…
+              </>
+            ) : (
+              <>
+                <i className="fas fa-save me-2" />
+                Save Company Details
+              </>
+            )}
+          </button>
+          {onCancel && (
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={onCancel}
+              style={{ minWidth: "120px" }}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </form>
     </div>
   );
 }
-

@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
-import { api } from '../api.js';
+import { useMemo, useState } from "react";
+import { api } from "../api.js";
 
 function fmtNum(n) {
-  if (n === 0 || n === '0') return '0';
+  if (n === 0 || n === "0") return "0";
   let s = parseFloat(n.toPrecision(12)).toString();
-  if (s.indexOf('e') !== -1) s = n.toFixed(10).replace(/\.?0+$/, '');
+  if (s.indexOf("e") !== -1) s = n.toFixed(10).replace(/\.?0+$/, "");
   return s;
 }
 
@@ -15,25 +15,25 @@ export default function CreateInvoiceForm({
   companyGstin,
   onSuccess,
 }) {
-  const [invoiceType, setInvoiceType] = useState('non_gst');
-  const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [clientName, setClientName] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
-  const [clientAddress, setClientAddress] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [gstNumber, setGstNumber] = useState('');
-  const [clientState, setClientState] = useState('');
-  const [taxRate, setTaxRate] = useState('0');
-  const [termsOption, setTermsOption] = useState('predefined1');
-  const [customTerms, setCustomTerms] = useState('');
+  const [invoiceType, setInvoiceType] = useState("non_gst");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [gstNumber, setGstNumber] = useState("");
+  const [clientState, setClientState] = useState("");
+  const [taxRate, setTaxRate] = useState("0");
+  const [termsOption, setTermsOption] = useState("predefined1");
+  const [customTerms, setCustomTerms] = useState("");
   const [items, setItems] = useState([
-    { description: '', quantity: '1', price: '' },
+    { description: "", quantity: "1", price: "" },
   ]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const isGst = invoiceType === 'gst';
+  const isGst = invoiceType === "gst";
 
   const totals = useMemo(() => {
     let subtotal = 0;
@@ -59,11 +59,19 @@ export default function CreateInvoiceForm({
     } else if (!isGst) {
       taxAmount = subtotal * (rate / 100);
     }
-    return { subtotal, taxAmount, total: subtotal + taxAmount, cgst, sgst, igst, same };
+    return {
+      subtotal,
+      taxAmount,
+      total: subtotal + taxAmount,
+      cgst,
+      sgst,
+      igst,
+      same,
+    };
   }, [items, taxRate, isGst, clientState, companyHomeState]);
 
   function addRow() {
-    setItems([...items, { description: '', quantity: '1', price: '' }]);
+    setItems([...items, { description: "", quantity: "1", price: "" }]);
   }
 
   function removeRow(i) {
@@ -77,16 +85,16 @@ export default function CreateInvoiceForm({
 
   async function onSubmit(e) {
     e.preventDefault();
-    setError('');
+    setError("");
     setSaving(true);
     try {
       if (!invoiceNumber.trim()) {
-        setError('Invoice number is required.');
+        setError("Invoice number is required.");
         return;
       }
 
-      await api('/api/invoices', {
-        method: 'POST',
+      await api("/api/invoices", {
+        method: "POST",
         body: JSON.stringify({
           invoiceNumber,
           clientName,
@@ -96,7 +104,7 @@ export default function CreateInvoiceForm({
           dueDate,
           invoiceType,
           gstNumber,
-          clientState: isGst ? clientState : '',
+          clientState: isGst ? clientState : "",
           taxRate: parseFloat(taxRate) || 0,
           termsOption,
           customTerms,
@@ -108,19 +116,19 @@ export default function CreateInvoiceForm({
         }),
       });
       onSuccess?.();
-      setClientName('');
-      setClientEmail('');
-      setClientPhone('');
-      setClientAddress('');
-      setDueDate('');
-      setInvoiceNumber('');
-      setGstNumber('');
-      setClientState('');
-      setTaxRate(isGst ? '18' : '0');
-      setTermsOption('predefined1');
-      setCustomTerms('');
-      setItems([{ description: '', quantity: '1', price: '' }]);
-      setInvoiceType('non_gst');
+      setClientName("");
+      setClientEmail("");
+      setClientPhone("");
+      setClientAddress("");
+      setDueDate("");
+      setInvoiceNumber("");
+      setGstNumber("");
+      setClientState("");
+      setTaxRate(isGst ? "18" : "0");
+      setTermsOption("predefined1");
+      setCustomTerms("");
+      setItems([{ description: "", quantity: "1", price: "" }]);
+      setInvoiceType("non_gst");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -132,55 +140,75 @@ export default function CreateInvoiceForm({
 
   return (
     <div className="card border-0 shadow-sm rounded-4">
-      <div className="card-header bg-white border-bottom fw-bold py-3">
-        <i className="fas fa-file-invoice-dollar me-2 text-primary" />
+      <div
+        className="card-header fw-bold py-3 text-white"
+        style={{
+          background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+        }}
+      >
+        <i className="fas fa-file-invoice-dollar me-2" />
         Create New Invoice
       </div>
       <div className="card-body">
         <div className="row g-3 mb-4">
           <div className="col-md-4">
             <div className="border rounded-4 p-3 h-100 bg-light">
-              <div className="small text-uppercase text-primary fw-bold mb-2">Step 1</div>
+              <div className="small text-uppercase text-primary fw-bold mb-2">
+                Step 1
+              </div>
               <div className="fw-bold">Invoice Basics</div>
-              <div className="small text-muted">Add invoice number, client info, and due date.</div>
+              <div className="small text-muted">
+                Add invoice number, client info, and due date.
+              </div>
             </div>
           </div>
           <div className="col-md-4">
             <div className="border rounded-4 p-3 h-100 bg-light">
-              <div className="small text-uppercase text-primary fw-bold mb-2">Step 2</div>
+              <div className="small text-uppercase text-primary fw-bold mb-2">
+                Step 2
+              </div>
               <div className="fw-bold">Tax & Terms</div>
-              <div className="small text-muted">Choose GST or non-GST and set terms clearly.</div>
+              <div className="small text-muted">
+                Choose GST or non-GST and set terms clearly.
+              </div>
             </div>
           </div>
           <div className="col-md-4">
             <div className="border rounded-4 p-3 h-100 bg-light">
-              <div className="small text-uppercase text-primary fw-bold mb-2">Step 3</div>
+              <div className="small text-uppercase text-primary fw-bold mb-2">
+                Step 3
+              </div>
               <div className="fw-bold">Items & Total</div>
-              <div className="small text-muted">Add line items and review the final total before saving.</div>
+              <div className="small text-muted">
+                Add line items and review the final total before saving.
+              </div>
             </div>
           </div>
         </div>
         {error && <div className="alert alert-danger py-2">{error}</div>}
         <form onSubmit={onSubmit}>
-          <div className="d-flex bg-light rounded p-1 mb-4 border" style={{ gap: 6 }}>
+          <div
+            className="d-flex bg-light rounded p-1 mb-4 border"
+            style={{ gap: 6 }}
+          >
             <button
               type="button"
-              className={`btn flex-fill ${!isGst ? 'btn-white shadow-sm' : 'btn-light'}`}
-              style={!isGst ? { background: 'white' } : {}}
+              className={`btn flex-fill ${!isGst ? "btn-white shadow-sm" : "btn-light"}`}
+              style={!isGst ? { background: "white" } : {}}
               onClick={() => {
-                setInvoiceType('non_gst');
-                setTaxRate('0');
+                setInvoiceType("non_gst");
+                setTaxRate("0");
               }}
             >
               Non-GST
             </button>
             <button
               type="button"
-              className={`btn flex-fill ${isGst ? 'text-white' : 'btn-light'}`}
-              style={isGst ? { background: '#4e73df' } : {}}
+              className={`btn flex-fill ${isGst ? "text-white" : "btn-light"}`}
+              style={isGst ? { background: "#4e73df" } : {}}
               onClick={() => {
-                setInvoiceType('gst');
-                setTaxRate((r) => (parseFloat(r) === 0 ? '18' : r));
+                setInvoiceType("gst");
+                setTaxRate((r) => (parseFloat(r) === 0 ? "18" : r));
               }}
             >
               GST
@@ -189,169 +217,184 @@ export default function CreateInvoiceForm({
 
           {isGst && (
             <div className="alert alert-info py-2 small mb-3">
-              Your company GSTIN: <strong>{companyGstin || 'Not set'}</strong>
+              Your company GSTIN: <strong>{companyGstin || "Not set"}</strong>
             </div>
           )}
 
           <div className="row g-3">
             <div className="col-md-6">
               <div className="border rounded-4 p-3 h-100">
-              <div className="small text-uppercase text-muted fw-bold mb-2">Client & Invoice Details</div>
-              <label className="form-label fw-semibold small">
-                Invoice Number <span className="text-danger">*</span>
-              </label>
-              <input
-                className="form-control font-monospace"
-                value={invoiceNumber}
-                onChange={(e) => setInvoiceNumber(e.target.value)}
-                placeholder="e.g. INV-001 or JSC/00001"
-                required
-              />
-              <label className="form-label fw-semibold small">
-                Client / Company <span className="text-danger">*</span>
-              </label>
-              <input
-                className="form-control"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                required
-              />
-              <label className="form-label fw-semibold small mt-2">Client email</label>
-              <input
-                type="email"
-                className="form-control"
-                value={clientEmail}
-                onChange={(e) => setClientEmail(e.target.value)}
-              />
-              <label className="form-label fw-semibold small mt-2">Client phone</label>
-              <input
-                className="form-control"
-                value={clientPhone}
-                onChange={(e) => setClientPhone(e.target.value)}
-              />
-              <label className="form-label fw-semibold small mt-2">Address</label>
-              <textarea
-                className="form-control"
-                rows={3}
-                value={clientAddress}
-                onChange={(e) => setClientAddress(e.target.value)}
-              />
-              {isGst && (
-                <div
-                  className="mt-3 p-3 rounded border"
-                  style={{ background: '#f0f4ff', borderColor: '#c5d5fb' }}
-                >
-                  <h6 className="text-primary fw-bold small">GST details</h6>
-                  <label className="form-label small">Client GSTIN</label>
-                  <input
-                    className="form-control text-uppercase font-monospace"
-                    maxLength={15}
-                    value={gstNumber}
-                    onChange={(e) => setGstNumber(e.target.value)}
-                  />
-                  <label className="form-label small mt-2">
-                    Client state <span className="text-danger">*</span>
-                  </label>
-                  <select
-                    className="form-select"
-                    value={clientState}
-                    onChange={(e) => setClientState(e.target.value)}
-                  >
-                    <option value="">Select state</option>
-                    {(indianStates || []).map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="mt-2 small text-muted">
-                    HSN/SAC: <code className="fw-bold">{fixedHsnSac}</code>
-                  </div>
-                  {clientState && (
-                    <div className="alert alert-primary py-2 small mt-2 mb-0">
-                      {totals.same
-                        ? 'Same state → CGST + SGST'
-                        : 'Inter-state → IGST'}
-                    </div>
-                  )}
+                <div className="small text-uppercase text-muted fw-bold mb-2">
+                  Client & Invoice Details
                 </div>
-              )}
+                <label className="form-label fw-semibold small">
+                  Invoice Number <span className="text-danger">*</span>
+                </label>
+                <input
+                  className="form-control font-monospace"
+                  value={invoiceNumber}
+                  onChange={(e) => setInvoiceNumber(e.target.value)}
+                  placeholder="e.g. INV-001 or JSC/00001"
+                  required
+                />
+                <label className="form-label fw-semibold small">
+                  Client / Company <span className="text-danger">*</span>
+                </label>
+                <input
+                  className="form-control"
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  required
+                />
+                <label className="form-label fw-semibold small">
+                  Client email
+                  <span className="form-label-optional">Optional</span>
+                </label>
+                <input
+                  type="email"
+                  className="form-control"
+                  value={clientEmail}
+                  onChange={(e) => setClientEmail(e.target.value)}
+                />
+                <label className="form-label fw-semibold small mt-2">
+                  Client phone
+                  <span className="form-label-optional">Optional</span>
+                </label>
+                <input
+                  className="form-control"
+                  value={clientPhone}
+                  onChange={(e) => setClientPhone(e.target.value)}
+                />
+                <label className="form-label fw-semibold small mt-2">
+                  Address
+                  <span className="form-label-optional">Optional</span>
+                </label>
+                <textarea
+                  className="form-control"
+                  rows={3}
+                  value={clientAddress}
+                  onChange={(e) => setClientAddress(e.target.value)}
+                />
+                {isGst && (
+                  <div
+                    className="mt-3 p-3 rounded border"
+                    style={{ background: "#f0f4ff", borderColor: "#c5d5fb" }}
+                  >
+                    <h6 className="text-primary fw-bold small">GST details</h6>
+                    <label className="form-label small">Client GSTIN</label>
+                    <input
+                      className="form-control text-uppercase font-monospace"
+                      maxLength={15}
+                      value={gstNumber}
+                      onChange={(e) => setGstNumber(e.target.value)}
+                    />
+                    <label className="form-label small mt-2">
+                      Client state <span className="text-danger">*</span>
+                    </label>
+                    <select
+                      className="form-select"
+                      value={clientState}
+                      onChange={(e) => setClientState(e.target.value)}
+                    >
+                      <option value="">Select state</option>
+                      {(indianStates || []).map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="mt-2 small text-muted">
+                      HSN/SAC: <code className="fw-bold">{fixedHsnSac}</code>
+                    </div>
+                    {clientState && (
+                      <div className="alert alert-primary py-2 small mt-2 mb-0">
+                        {totals.same
+                          ? "Same state → CGST + SGST"
+                          : "Inter-state → IGST"}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
             <div className="col-md-6">
               <div className="border rounded-4 p-3 h-100">
-              <div className="small text-uppercase text-muted fw-bold mb-2">Tax, Due Date & Terms</div>
-              <label className="form-label fw-semibold small">
-                Due date <span className="text-danger">*</span>
-              </label>
-              <input
-                type="date"
-                className="form-control"
-                min={minDue}
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                required
-              />
-              <label className="form-label fw-semibold small mt-2">
-                {isGst ? 'GST rate (%)' : 'Tax rate (%)'}
-              </label>
-              <input
-                type="number"
-                className="form-control"
-                step="any"
-                min={0}
-                max={100}
-                value={taxRate}
-                onChange={(e) => setTaxRate(e.target.value)}
-              />
-              {isGst && (
-                <div className="small mt-1">
-                  {[0, 5, 12, 18, 28].map((r) => (
-                    <button
-                      key={r}
-                      type="button"
-                      className="btn btn-sm btn-outline-secondary me-1 py-0"
-                      onClick={() => setTaxRate(String(r))}
-                    >
-                      {r}%
-                    </button>
-                  ))}
+                <div className="small text-uppercase text-muted fw-bold mb-2">
+                  Tax, Due Date & Terms
                 </div>
-              )}
-              <label className="form-label fw-semibold small mt-3">Terms</label>
-              <div className="border rounded p-3 bg-light small">
-                {[
-                  ['predefined1', 'Virtual Panel T&C'],
-                  ['predefined2', 'Whatsend Software T&C'],
-                  ['meta_ads', 'Meta Ads T&C'],
-                  ['google_ads', 'Google Ads T&C'],
-                  ['api', 'API T&C'],
-                  ['custom', 'Custom T&C'],
-                ].map(([v, lbl]) => (
-                  <div key={v} className="form-check mb-1">
-                    <input
-                      className="form-check-input"
-                      type="radio"
-                      name="terms_option"
-                      id={`t-${v}`}
-                      checked={termsOption === v}
-                      onChange={() => setTermsOption(v)}
-                    />
-                    <label className="form-check-label" htmlFor={`t-${v}`}>
-                      {lbl}
-                    </label>
+                <label className="form-label fw-semibold small">
+                  Due date <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="date"
+                  className="form-control"
+                  min={minDue}
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  required
+                />
+                <label className="form-label fw-semibold small mt-2">
+                  {isGst ? "GST rate (%)" : "Tax rate (%)"}
+                </label>
+                <input
+                  type="number"
+                  className="form-control"
+                  step="any"
+                  min={0}
+                  max={100}
+                  value={taxRate}
+                  onChange={(e) => setTaxRate(e.target.value)}
+                />
+                {isGst && (
+                  <div className="small mt-1">
+                    {[0, 5, 12, 18, 28].map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary me-1 py-0"
+                        onClick={() => setTaxRate(String(r))}
+                      >
+                        {r}%
+                      </button>
+                    ))}
                   </div>
-                ))}
-                {termsOption === 'custom' && (
-                  <textarea
-                    className="form-control mt-2"
-                    rows={3}
-                    placeholder="One term per line"
-                    value={customTerms}
-                    onChange={(e) => setCustomTerms(e.target.value)}
-                  />
                 )}
-              </div>
+                <label className="form-label fw-semibold small mt-3">
+                  Terms
+                </label>
+                <div className="border rounded p-3 bg-light small">
+                  {[
+                    ["predefined1", "Virtual Panel T&C"],
+                    ["predefined2", "Whatsend Software T&C"],
+                    ["meta_ads", "Meta Ads T&C"],
+                    ["google_ads", "Google Ads T&C"],
+                    ["api", "API T&C"],
+                    ["custom", "Custom T&C"],
+                  ].map(([v, lbl]) => (
+                    <div key={v} className="form-check mb-1">
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        name="terms_option"
+                        id={`t-${v}`}
+                        checked={termsOption === v}
+                        onChange={() => setTermsOption(v)}
+                      />
+                      <label className="form-check-label" htmlFor={`t-${v}`}>
+                        {lbl}
+                      </label>
+                    </div>
+                  ))}
+                  {termsOption === "custom" && (
+                    <textarea
+                      className="form-control mt-2"
+                      rows={3}
+                      placeholder="One term per line"
+                      value={customTerms}
+                      onChange={(e) => setCustomTerms(e.target.value)}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -374,14 +417,17 @@ export default function CreateInvoiceForm({
               <tbody>
                 {items.map((row, i) => {
                   const amt =
-                    (parseFloat(row.quantity) || 0) * (parseFloat(row.price) || 0);
+                    (parseFloat(row.quantity) || 0) *
+                    (parseFloat(row.price) || 0);
                   return (
                     <tr key={i}>
                       <td>
                         <input
                           className="form-control form-control-sm"
                           value={row.description}
-                          onChange={(e) => updateItem(i, 'description', e.target.value)}
+                          onChange={(e) =>
+                            updateItem(i, "description", e.target.value)
+                          }
                           required
                         />
                       </td>
@@ -392,7 +438,9 @@ export default function CreateInvoiceForm({
                           step="any"
                           min="0.000001"
                           value={row.quantity}
-                          onChange={(e) => updateItem(i, 'quantity', e.target.value)}
+                          onChange={(e) =>
+                            updateItem(i, "quantity", e.target.value)
+                          }
                           required
                         />
                       </td>
@@ -402,7 +450,9 @@ export default function CreateInvoiceForm({
                           className="form-control form-control-sm"
                           step="any"
                           value={row.price}
-                          onChange={(e) => updateItem(i, 'price', e.target.value)}
+                          onChange={(e) =>
+                            updateItem(i, "price", e.target.value)
+                          }
                           required
                         />
                       </td>
@@ -422,7 +472,11 @@ export default function CreateInvoiceForm({
               </tbody>
             </table>
           </div>
-          <button type="button" className="btn btn-sm btn-primary mb-3" onClick={addRow}>
+          <button
+            type="button"
+            className="btn btn-sm btn-primary mb-3"
+            onClick={addRow}
+          >
             <i className="fas fa-plus me-1" />
             Add item
           </button>
@@ -468,8 +522,18 @@ export default function CreateInvoiceForm({
           </div>
 
           <div className="d-flex gap-2">
-            <button type="submit" className="btn btn-success" disabled={saving}>
-              {saving ? 'Saving…' : 'Create invoice'}
+            <button type="submit" className="btn-gradient" disabled={saving}>
+              {saving ? (
+                <>
+                  <i className="fas fa-spinner fa-spin me-2" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-save me-2" />
+                  Create Invoice
+                </>
+              )}
             </button>
           </div>
         </form>
