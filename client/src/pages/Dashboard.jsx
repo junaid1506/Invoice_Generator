@@ -218,7 +218,6 @@ export default function Dashboard() {
         <header
           className="d-none d-md-flex align-items-center justify-content-between px-4 py-3"
           style={{
-            marginBottom: -120,
             marginLeft: 240,
             position: "fixed",
             right: 0,
@@ -251,7 +250,10 @@ export default function Dashboard() {
           </span>
         </header>
 
-        <main className="app-main-offset p-3 p-md-4 pt-5">
+        <main
+          className="app-main-offset p-3 p-md-4 pt-5"
+          style={{ marginTop: "80px" }}
+        >
           {banner && (
             <div className="alert alert-success alert-dismissible">
               {banner}
