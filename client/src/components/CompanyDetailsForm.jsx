@@ -1,10 +1,81 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api.js";
+import "./CompanyDetailsForm.css";
 
 function normalizeUpcase(v) {
   return String(v || "")
     .trim()
     .toUpperCase();
+}
+
+// ── Inline SVG icon ──────────────────────────────────────────
+function Icon({ d, size = 16, color = "currentColor", style }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ flexShrink: 0, ...style }}
+    >
+      <path d={d} />
+    </svg>
+  );
+}
+
+const ICONS = {
+  building: "M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10",
+  id: "M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z",
+  card: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z",
+  invoice:
+    "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
+  save: "M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4",
+  spin: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15",
+  check: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+  info: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+  image:
+    "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z",
+  trash:
+    "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16",
+  receipt:
+    "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2",
+  x: "M6 18L18 6M6 6l12 12",
+};
+
+// ── Section card ─────────────────────────────────────────────
+function SectionCard({ icon, title, children }) {
+  return (
+    <div className="cdf-card">
+      <div className="cdf-card-head">
+        <div className="cdf-card-head-icon">
+          <Icon d={icon} size={15} color="white" />
+        </div>
+        <span className="cdf-card-title">{title}</span>
+      </div>
+      <div className="cdf-card-body">{children}</div>
+    </div>
+  );
+}
+
+// ── Field wrapper ─────────────────────────────────────────────
+function Field({ label, required, optional, hint, children }) {
+  return (
+    <div className="cdf-field">
+      {label && (
+        <label className="cdf-label">
+          {label}
+          {required && <span className="cdf-req"> *</span>}
+          {optional && <span className="cdf-opt">Optional</span>}
+        </label>
+      )}
+      {children}
+      {hint && <div className="cdf-hint">{hint}</div>}
+    </div>
+  );
 }
 
 export default function CompanyDetailsForm({
@@ -14,6 +85,8 @@ export default function CompanyDetailsForm({
   onCancel,
 }) {
   const company = initialCompany || {};
+  const topRef = useRef(null);
+  const logoInputRef = useRef(null);
 
   const [companyName, setCompanyName] = useState(company.companyName || "");
   const [companyAddress, setCompanyAddress] = useState(
@@ -52,10 +125,11 @@ export default function CompanyDetailsForm({
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   const [bankPaymentType, setBankPaymentType] = useState("gst");
 
+  // Sync when parent refreshes initialCompany
   useEffect(() => {
-    // Keep form in sync if Dashboard refreshes after saving.
     setCompanyName(company.companyName || "");
     setCompanyAddress(company.companyAddress || "");
     setCompanyPhone(company.companyPhone || "");
@@ -64,13 +138,11 @@ export default function CompanyDetailsForm({
     setCompanyLogo(company.companyLogo || "");
     setCompanyGstin(company.companyGstin || "");
     setCompanyHomeState(company.companyHomeState || "Delhi");
-
     setGstBankName(company.gstBankName || "");
     setGstAccountName(company.gstAccountName || "");
     setGstAccountNo(company.gstAccountNo || "");
     setGstIfsc(company.gstIfsc || "");
     setGstBranch(company.gstBranch || "");
-
     setNongstBankName(company.nongstBankName || "");
     setNongstAccountName(company.nongstAccountName || "");
     setNongstAccountNo(company.nongstAccountNo || "");
@@ -83,26 +155,23 @@ export default function CompanyDetailsForm({
   function onLogoChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (!file.type.startsWith("image/")) {
       setError("Please choose an image file for the logo.");
       return;
     }
-
     const reader = new FileReader();
     reader.onload = () => {
       setCompanyLogo(typeof reader.result === "string" ? reader.result : "");
       setError("");
     };
-    reader.onerror = () => {
-      setError("Failed to read file. Please try again.");
-    };
+    reader.onerror = () => setError("Failed to read file. Please try again.");
     reader.readAsDataURL(file);
   }
 
   async function onSubmit(e) {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
     setSaving(true);
     try {
       const payload = {
@@ -125,329 +194,242 @@ export default function CompanyDetailsForm({
         nongstIfsc,
         nongstUpi,
       };
-
       const res = await api("/api/company/me", {
         method: "PUT",
         body: JSON.stringify(payload),
       });
+
+      // ── Scroll to top & show success ──
+      topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setSuccessMsg("Company details saved successfully!");
+      setTimeout(() => setSuccessMsg(""), 4000);
+
       onSaved?.(res.company);
     } catch (err) {
       setError(err.message || "Failed to save company details");
+      topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="card-modern">
-      <div className="card-modern-header mb-4">
+    <div className="cdf-root" ref={topRef}>
+      {/* ── Success toast ── */}
+      {successMsg && (
+        <div className="cdf-toast">
+          <div className="cdf-toast-icon">
+            <Icon d={ICONS.check} size={15} color="white" />
+          </div>
+          {successMsg}
+        </div>
+      )}
+
+      {/* ── Page header ── */}
+      <div className="cdf-page-header">
+        <div className="cdf-page-header-icon">
+          <Icon d={ICONS.building} size={20} color="white" />
+        </div>
         <div>
-          <h3 className="card-modern-title">
-            <i className="fas fa-building me-2" style={{ color: "#6366f1" }} />
-            Your Company Details
-          </h3>
-          <p className="card-modern-subtitle">
+          <h2 className="cdf-page-title">Company Details</h2>
+          <p className="cdf-page-sub">
             Setup your company once for all invoices
           </p>
         </div>
       </div>
 
-      {/* Quick Setup Guide */}
-      <div className="row g-3 mb-4">
+      {/* ── Step pills ── */}
+      <div className="cdf-steps">
         {[
           {
-            step: 1,
-            title: "Business Identity",
-            desc: "Company name, logo, GSTIN, and contact",
+            n: "01",
+            label: "Business Identity",
+            sub: "Name, logo, GSTIN & contact",
           },
+          { n: "02", label: "Payment Setup", sub: "Bank & UPI details" },
           {
-            step: 2,
-            title: "Payment Setup",
-            desc: "Bank and UPI details for invoices",
+            n: "03",
+            label: "Auto-fill",
+            sub: "Details added to every invoice",
           },
-          {
-            step: 3,
-            title: "Create Invoices",
-            desc: "Auto-fill details in every invoice",
-          },
-        ].map(({ step, title, desc }) => (
-          <div key={step} className="col-md-4">
-            <div
-              style={{
-                padding: "16px",
-                border: "1px solid rgba(99, 102, 241, 0.2)",
-                borderRadius: "8px",
-                background:
-                  "linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05))",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "12px",
-                  color: "#6366f1",
-                  fontWeight: "700",
-                  marginBottom: "8px",
-                }}
-              >
-                STEP {step}
-              </div>
-              <h6 style={{ fontWeight: "700", marginBottom: "4px" }}>
-                {title}
-              </h6>
-              <p
-                style={{ fontSize: "13px", color: "#64748b", marginBottom: 0 }}
-              >
-                {desc}
-              </p>
+        ].map((s, i) => (
+          <div key={i} className="cdf-step">
+            <div className="cdf-step-num">{s.n}</div>
+            <div>
+              <div className="cdf-step-label">{s.label}</div>
+              <div className="cdf-step-sub">{s.sub}</div>
             </div>
           </div>
         ))}
       </div>
 
+      {/* ── Error ── */}
       {error && (
-        <div className="alert alert-error" style={{ marginBottom: "20px" }}>
-          <i className="fas fa-exclamation-circle me-2" />
+        <div className="cdf-error">
+          <Icon d={ICONS.info} size={16} />
           {error}
         </div>
       )}
 
-      <form onSubmit={onSubmit}>
-        <div className="row g-4">
-          {/* LEFT COLUMN - BASIC DETAILS */}
-          <div className="col-lg-6">
-            <h5 className="section-header">
-              <i className="fas fa-id-card me-2" />
-              Business Identity
-            </h5>
-
-            {/* Logo Upload */}
-            <div className="form-group" style={{ marginBottom: "28px" }}>
-              <div className="form-label-wrapper">
-                <label className="form-label">Company Logo</label>
-                <span className="form-label-optional">Optional</span>
-              </div>
+      <form onSubmit={onSubmit} noValidate>
+        <div className="cdf-two-col">
+          {/* ═══ LEFT: Business Identity ═══ */}
+          <SectionCard icon={ICONS.id} title="Business Identity">
+            {/* Logo upload */}
+            <Field
+              label="Company Logo"
+              optional
+              hint="Square format works best. PNG or JPG, max 5 MB."
+            >
+              {/* Hidden file input triggered via ref */}
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={onLogoChange}
+                style={{ display: "none" }}
+              />
               <div
-                style={{
-                  border: "2px dashed #e2e8f0",
-                  borderRadius: "8px",
-                  padding: "20px",
-                  textAlign: "center",
-                  marginBottom: "12px",
-                  backgroundColor: "#f8fafc",
-                  transition: "all 0.3s ease",
-                  cursor: "pointer",
-                }}
+                className="cdf-logo-zone"
+                onClick={() => logoInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
                   const file = e.dataTransfer.files?.[0];
-                  if (file) {
-                    const event = { target: { files: [file] } };
-                    onLogoChange(event);
-                  }
-                }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.currentTarget.style.backgroundColor = "#ede9fe";
-                }}
-                onDragLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                  if (file) onLogoChange({ target: { files: [file] } });
                 }}
               >
                 {companyLogo ? (
-                  <div>
+                  <>
                     <img
                       src={companyLogo}
                       alt="Company logo"
-                      style={{
-                        maxHeight: "80px",
-                        maxWidth: "180px",
-                        objectFit: "contain",
-                        marginBottom: "12px",
-                      }}
+                      className="cdf-logo-preview"
                     />
-                    <p
-                      style={{
-                        fontSize: "12px",
-                        color: "#64748b",
-                        marginBottom: 0,
-                      }}
-                    >
-                      <i
-                        className="fas fa-check-circle"
-                        style={{ color: "#10b981" }}
-                      />{" "}
-                      Logo uploaded
-                    </p>
-                  </div>
+                    <div className="cdf-logo-success">
+                      <Icon d={ICONS.check} size={13} color="#22c55e" /> Logo
+                      uploaded
+                    </div>
+                  </>
                 ) : (
-                  <div>
-                    <i
-                      className="fas fa-image"
-                      style={{
-                        fontSize: "32px",
-                        color: "#cbd5e1",
-                        marginBottom: "12px",
-                        display: "block",
-                      }}
+                  <>
+                    <Icon
+                      d={ICONS.image}
+                      size={32}
+                      color="var(--s300)"
+                      style={{ marginBottom: 10 }}
                     />
-                    <p style={{ marginBottom: "4px", fontWeight: "600" }}>
+                    <div className="cdf-logo-title">
                       Drag logo here or click to upload
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "12px",
-                        color: "#64748b",
-                        marginBottom: 0,
-                      }}
-                    >
-                      PNG or JPG, max 5MB
-                    </p>
-                  </div>
+                    </div>
+                    <div className="cdf-logo-sub">PNG or JPG, max 5 MB</div>
+                  </>
                 )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={onLogoChange}
-                  style={{ display: "none" }}
-                  onClick={(e) => {
-                    const input = e.target;
-                    input.click();
-                  }}
-                  ref={(input) => {
-                    if (input) {
-                      input.parentElement.onclick = () => input.click();
-                    }
-                  }}
-                />
               </div>
               {companyLogo && (
                 <button
                   type="button"
-                  className="btn btn-outline"
+                  className="cdf-remove-btn"
                   onClick={() => setCompanyLogo("")}
-                  style={{ fontSize: "13px", padding: "6px 12px" }}
                 >
-                  <i className="fas fa-trash-alt me-1" />
-                  Remove Logo
+                  <Icon d={ICONS.trash} size={13} color="#dc2626" /> Remove Logo
                 </button>
               )}
-              <div className="form-hint-text">
-                This logo will appear on all your invoices. Square format works
-                best.
-              </div>
-            </div>
+            </Field>
 
-            {/* Company Name */}
-            <div className="form-group">
-              <label className="form-label">
-                Company Name <span className="form-label-required">*</span>
-              </label>
+            <div className="cdf-divider" />
+
+            {/* Company name */}
+            <Field
+              label="Company Name"
+              required
+              hint="Your official business name"
+            >
               <input
-                type="text"
-                className="form-input"
+                className="cdf-input"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="e.g., ABC Pvt Ltd"
                 required
               />
-              <div className="form-hint-text">Your official business name</div>
-            </div>
+            </Field>
 
             {/* Address */}
-            <div className="form-group">
-              <label className="form-label">
-                Address <span className="form-label-required">*</span>
-              </label>
+            <Field
+              label="Address"
+              required
+              hint="Complete billing address for invoices"
+            >
               <textarea
-                className="form-textarea"
+                className="cdf-input cdf-textarea"
                 value={companyAddress}
                 onChange={(e) => setCompanyAddress(e.target.value)}
-                placeholder="Full office address"
+                placeholder="Full office address…"
                 required
               />
-              <div className="form-hint-text">
-                Complete business address for invoices
-              </div>
-            </div>
+            </Field>
 
-            {/* Phone */}
-            <div className="form-group">
-              <div className="form-label-wrapper">
-                <label className="form-label">Phone</label>
-                <span className="form-label-optional">Optional</span>
-              </div>
-              <input
-                type="tel"
-                className="form-input"
-                value={companyPhone}
-                onChange={(e) => setCompanyPhone(e.target.value)}
-                placeholder="e.g., +91 9999999999"
-              />
-            </div>
-
-            {/* Email */}
-            <div className="form-group">
-              <div className="form-label-wrapper">
-                <label className="form-label">Email</label>
-                <span className="form-label-optional">Optional</span>
-              </div>
-              <input
-                type="email"
-                className="form-input"
-                value={companyEmail}
-                onChange={(e) => setCompanyEmail(e.target.value)}
-                placeholder="e.g., info@company.com"
-              />
+            {/* Phone + Email */}
+            <div className="cdf-field-row">
+              <Field label="Phone" optional>
+                <input
+                  type="tel"
+                  className="cdf-input"
+                  value={companyPhone}
+                  onChange={(e) => setCompanyPhone(e.target.value)}
+                  placeholder="+91 9999999999"
+                />
+              </Field>
+              <Field label="Email" optional>
+                <input
+                  type="email"
+                  className="cdf-input"
+                  value={companyEmail}
+                  onChange={(e) => setCompanyEmail(e.target.value)}
+                  placeholder="info@company.com"
+                />
+              </Field>
             </div>
 
             {/* Website */}
-            <div className="form-group">
-              <div className="form-label-wrapper">
-                <label className="form-label">Website</label>
-                <span className="form-label-optional">Optional</span>
-              </div>
+            <Field label="Website" optional>
               <input
                 type="url"
-                className="form-input"
+                className="cdf-input"
                 value={companyWebsite}
                 onChange={(e) => setCompanyWebsite(e.target.value)}
-                placeholder="e.g., www.company.com"
+                placeholder="www.company.com"
               />
-            </div>
-          </div>
+            </Field>
+          </SectionCard>
 
-          {/* RIGHT COLUMN - TAX & PAYMENT DETAILS */}
-          <div className="col-lg-6">
-            <h5 className="section-header">
-              <i className="fas fa-credit-card me-2" />
-              Tax & Payment Details
-            </h5>
-
+          {/* ═══ RIGHT: Tax & Payment ═══ */}
+          <SectionCard icon={ICONS.card} title="Tax & Payment Details">
             {/* GSTIN */}
-            <div className="form-group">
-              <label className="form-label">
-                GSTIN <span className="form-label-required">*</span>
-              </label>
+            <Field
+              label="GSTIN"
+              required
+              hint="15-character GST identification number"
+            >
               <input
                 type="text"
-                className="form-input font-monospace"
+                className="cdf-input cdf-mono"
                 value={companyGstin}
-                onChange={(e) => setCompanyGstin(e.target.value)}
-                placeholder="e.g., 27AABCU9603R1Z0"
+                onChange={(e) => setCompanyGstin(e.target.value.toUpperCase())}
+                placeholder="27AABCU9603R1Z0"
+                maxLength={15}
                 required
-                style={{ letterSpacing: "1px" }}
               />
-              <div className="form-hint-text">15-character GSTIN number</div>
-            </div>
+            </Field>
 
-            {/* Company Home State */}
-            <div className="form-group">
-              <label className="form-label">
-                Company Home State{" "}
-                <span className="form-label-required">*</span>
-              </label>
+            {/* Home state */}
+            <Field
+              label="Company Home State"
+              required
+              hint="Used for CGST / SGST / IGST calculations"
+            >
               <select
-                className="form-select"
+                className="cdf-input cdf-select"
                 value={companyHomeState}
                 onChange={(e) => setCompanyHomeState(e.target.value)}
               >
@@ -457,264 +439,163 @@ export default function CompanyDetailsForm({
                   </option>
                 ))}
               </select>
-              <div className="form-hint-text">
-                Used for CGST/SGST/IGST calculations
-              </div>
-            </div>
+            </Field>
 
-            {/* Bank Payment Type Toggle */}
-            <div style={{ marginTop: "32px", marginBottom: "24px" }}>
-              <label className="form-label">Payment Details Type</label>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "12px",
-                  backgroundColor: "#f1f5f9",
-                  padding: "4px",
-                  borderRadius: "8px",
-                }}
-              >
+            <div className="cdf-divider" />
+
+            {/* Payment type toggle */}
+            <Field label="Payment Details For">
+              <div className="cdf-pay-toggle">
                 <button
                   type="button"
+                  className={`cdf-pay-btn ${bankPaymentType === "gst" ? "active" : ""}`}
                   onClick={() => setBankPaymentType("gst")}
-                  style={{
-                    flex: 1,
-                    padding: "10px 16px",
-                    border: "none",
-                    borderRadius: "6px",
-                    fontWeight: "600",
-                    fontSize: "13px",
-                    cursor: "pointer",
-                    transition: "all 0.3s ease",
-                    backgroundColor:
-                      bankPaymentType === "gst" ? "white" : "transparent",
-                    color: bankPaymentType === "gst" ? "#6366f1" : "#64748b",
-                    boxShadow:
-                      bankPaymentType === "gst"
-                        ? "0 2px 8px rgba(99, 102, 241, 0.2)"
-                        : "none",
-                  }}
                 >
-                  <i className="fas fa-receipt me-2" />
+                  <Icon d={ICONS.receipt} size={15} />
                   GST Invoice
                 </button>
                 <button
                   type="button"
+                  className={`cdf-pay-btn ${bankPaymentType === "nongst" ? "active" : ""}`}
                   onClick={() => setBankPaymentType("nongst")}
-                  style={{
-                    flex: 1,
-                    padding: "10px 16px",
-                    border: "none",
-                    borderRadius: "6px",
-                    fontWeight: "600",
-                    fontSize: "13px",
-                    cursor: "pointer",
-                    transition: "all 0.3s ease",
-                    backgroundColor:
-                      bankPaymentType === "nongst" ? "white" : "transparent",
-                    color: bankPaymentType === "nongst" ? "#6366f1" : "#64748b",
-                    boxShadow:
-                      bankPaymentType === "nongst"
-                        ? "0 2px 8px rgba(99, 102, 241, 0.2)"
-                        : "none",
-                  }}
                 >
-                  <i className="fas fa-file-alt me-2" />
+                  <Icon d={ICONS.invoice} size={15} />
                   Non-GST Invoice
                 </button>
               </div>
-              <div className="form-hint-text">
-                Choose the type to edit payment details for that invoice type
-              </div>
-            </div>
+            </Field>
 
-            {/* GST PAYMENT DETAILS */}
+            {/* ── GST bank details ── */}
             {bankPaymentType === "gst" && (
-              <div>
-                <div
-                  style={{
-                    padding: "12px 16px",
-                    background:
-                      "linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(20, 184, 166, 0.1))",
-                    border: "1px solid rgba(16, 185, 129, 0.2)",
-                    borderRadius: "8px",
-                    marginBottom: "20px",
-                    fontSize: "13px",
-                    color: "#047857",
-                  }}
-                >
-                  <i className="fas fa-info-circle me-2" />
-                  Payment details for GST invoices
+              <>
+                <div className="cdf-info-banner green">
+                  <Icon d={ICONS.info} size={14} color="#15803d" />
+                  Bank details printed on GST invoices
                 </div>
-
-                <div className="form-group">
-                  <label className="form-label">Bank Name</label>
+                <Field label="Bank Name">
                   <input
-                    type="text"
-                    className="form-input"
+                    className="cdf-input"
                     value={gstBankName}
                     onChange={(e) => setGstBankName(e.target.value)}
                     placeholder="e.g., HDFC Bank"
                   />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Account Name</label>
+                </Field>
+                <Field label="Account Name">
                   <input
-                    type="text"
-                    className="form-input"
+                    className="cdf-input"
                     value={gstAccountName}
                     onChange={(e) => setGstAccountName(e.target.value)}
                     placeholder="Account holder name"
                   />
+                </Field>
+                <div className="cdf-field-row">
+                  <Field label="Account No.">
+                    <input
+                      className="cdf-input cdf-mono"
+                      value={gstAccountNo}
+                      onChange={(e) => setGstAccountNo(e.target.value)}
+                      placeholder="Account number"
+                    />
+                  </Field>
+                  <Field label="IFSC Code">
+                    <input
+                      className="cdf-input cdf-mono"
+                      value={gstIfsc}
+                      onChange={(e) => setGstIfsc(e.target.value.toUpperCase())}
+                      placeholder="HDFC0000001"
+                    />
+                  </Field>
                 </div>
-
-                <div className="form-group">
-                  <label className="form-label">Account No.</label>
+                <Field label="Branch">
                   <input
-                    type="text"
-                    className="form-input font-monospace"
-                    value={gstAccountNo}
-                    onChange={(e) => setGstAccountNo(e.target.value)}
-                    placeholder="Bank account number"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">IFSC Code</label>
-                  <input
-                    type="text"
-                    className="form-input font-monospace"
-                    value={gstIfsc}
-                    onChange={(e) => setGstIfsc(e.target.value)}
-                    placeholder="e.g., HDFC0000001"
-                    style={{ letterSpacing: "1px" }}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Branch</label>
-                  <input
-                    type="text"
-                    className="form-input"
+                    className="cdf-input"
                     value={gstBranch}
                     onChange={(e) => setGstBranch(e.target.value)}
-                    placeholder="Branch name/location"
+                    placeholder="Branch name / location"
                   />
-                </div>
-              </div>
+                </Field>
+              </>
             )}
 
-            {/* NON-GST PAYMENT DETAILS */}
+            {/* ── Non-GST bank details ── */}
             {bankPaymentType === "nongst" && (
-              <div>
-                <div
-                  style={{
-                    padding: "12px 16px",
-                    background:
-                      "linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1))",
-                    border: "1px solid rgba(99, 102, 241, 0.2)",
-                    borderRadius: "8px",
-                    marginBottom: "20px",
-                    fontSize: "13px",
-                    color: "#1e40af",
-                  }}
-                >
-                  <i className="fas fa-info-circle me-2" />
-                  Payment details for Non-GST invoices (Bank & UPI)
+              <>
+                <div className="cdf-info-banner blue">
+                  <Icon d={ICONS.info} size={14} color="#1d4ed8" />
+                  Bank & UPI details for Non-GST invoices
                 </div>
-
-                <div className="form-group">
-                  <label className="form-label">Bank Name</label>
+                <Field label="Bank Name">
                   <input
-                    type="text"
-                    className="form-input"
+                    className="cdf-input"
                     value={nongstBankName}
                     onChange={(e) => setNongstBankName(e.target.value)}
                     placeholder="e.g., ICICI Bank"
                   />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Account Name</label>
+                </Field>
+                <Field label="Account Name">
                   <input
-                    type="text"
-                    className="form-input"
+                    className="cdf-input"
                     value={nongstAccountName}
                     onChange={(e) => setNongstAccountName(e.target.value)}
                     placeholder="Account holder name"
                   />
+                </Field>
+                <div className="cdf-field-row">
+                  <Field label="Account No.">
+                    <input
+                      className="cdf-input cdf-mono"
+                      value={nongstAccountNo}
+                      onChange={(e) => setNongstAccountNo(e.target.value)}
+                      placeholder="Account number"
+                    />
+                  </Field>
+                  <Field label="IFSC Code">
+                    <input
+                      className="cdf-input cdf-mono"
+                      value={nongstIfsc}
+                      onChange={(e) =>
+                        setNongstIfsc(e.target.value.toUpperCase())
+                      }
+                      placeholder="ICIC0000001"
+                    />
+                  </Field>
                 </div>
-
-                <div className="form-group">
-                  <label className="form-label">Account No.</label>
+                <Field label="UPI ID" hint="Shown as QR / UPI on invoices">
                   <input
-                    type="text"
-                    className="form-input font-monospace"
-                    value={nongstAccountNo}
-                    onChange={(e) => setNongstAccountNo(e.target.value)}
-                    placeholder="Bank account number"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">IFSC Code</label>
-                  <input
-                    type="text"
-                    className="form-input font-monospace"
-                    value={nongstIfsc}
-                    onChange={(e) => setNongstIfsc(e.target.value)}
-                    placeholder="e.g., ICIC0000001"
-                    style={{ letterSpacing: "1px" }}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">UPI ID</label>
-                  <input
-                    type="text"
-                    className="form-input font-monospace"
+                    className="cdf-input cdf-mono"
                     value={nongstUpi}
                     onChange={(e) => setNongstUpi(e.target.value)}
-                    placeholder="e.g., yourname@upi"
+                    placeholder="yourname@upi"
                   />
-                </div>
-              </div>
+                </Field>
+              </>
             )}
-          </div>
+          </SectionCard>
         </div>
 
-        {/* Form Actions */}
-        <div style={{ display: "flex", gap: "12px", marginTop: "32px" }}>
-          <button
-            type="submit"
-            className="btn-gradient"
-            disabled={saving}
-            style={{
-              minWidth: "180px",
-              opacity: saving ? 0.7 : 1,
-              pointerEvents: saving ? "none" : "auto",
-            }}
-          >
+        {/* ── Submit row ── */}
+        <div className="cdf-submit-row">
+          <button type="submit" className="cdf-submit-btn" disabled={saving}>
             {saving ? (
               <>
-                <i className="fas fa-spinner fa-spin me-2" />
+                <Icon
+                  d={ICONS.spin}
+                  size={16}
+                  color="white"
+                  style={{ animation: "cdf-spin .7s linear infinite" }}
+                />
                 Saving…
               </>
             ) : (
               <>
-                <i className="fas fa-save me-2" />
+                <Icon d={ICONS.save} size={16} color="white" />
                 Save Company Details
               </>
             )}
           </button>
           {onCancel && (
-            <button
-              type="button"
-              className="btn-outline"
-              onClick={onCancel}
-              style={{ minWidth: "120px" }}
-            >
+            <button type="button" className="cdf-cancel-btn" onClick={onCancel}>
+              <Icon d={ICONS.x} size={15} />
               Cancel
             </button>
           )}
