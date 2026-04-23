@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api.js";
-import "./CompanyDetailsForm.css";
+import "./Companydetailsform.css";
 
 function normalizeUpcase(v) {
   return String(v || "")
