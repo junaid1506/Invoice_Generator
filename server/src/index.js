@@ -12,7 +12,11 @@ import companyRoutes from "./routes/company.js";
 import { APP_NAME } from "./config.js";
 
 const app = express();
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || true, credentials: true }));
+// const allowedOrigins = ["https://invoice-generator-beta-lyart.vercel.app"];
+app.use(cors());
+
+// 👇 ye line MUST hai
+app.options("*", cors());
 app.use(express.json({ limit: "2mb" }));
 
 app.get("/api/health", (_req, res) => res.json({ ok: true, app: APP_NAME }));
