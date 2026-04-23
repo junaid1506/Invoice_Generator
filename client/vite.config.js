@@ -7,7 +7,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "https://invoice-generator-s16o.onrender.com/",
+        target: "https://invoice-generator-s16o.onrender.com",
         changeOrigin: true,
       },
     },
